@@ -25,6 +25,6 @@ struct SentenceExerciseModel: Identifiable, Codable, Equatable {
         self.wordBank = wordBank ?? merged.shuffled()
     }
     var wordBankTokenModels: [WordTokenModel] {
-            wordBank.map { WordTokenModel(text: $0) }
+        wordBank.map { WordTokenModel(text: $0) }
     }
 }

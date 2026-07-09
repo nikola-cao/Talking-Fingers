@@ -258,7 +258,7 @@ class FlashcardVM {
         }
 
         let topCards = Array(sorted.prefix(limit))
-        return DailyReviewQueue(cards: topCards, requestedLimit: limit, totalCardCount: flashcards.count)
+        return DailyReviewQueue(cards: topCards, requestedLimit: limit)
     }
 
     private func progressRank(_ card: FlashcardModel) -> Int {

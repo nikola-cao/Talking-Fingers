@@ -17,21 +17,12 @@ class FlashcardModel {
     var category: TermCategory
     var gifFileName: String?
     
-    init(term: Term, id: UUID, lastSucceeded: Date?, starred: Bool, progress: ProgressType, category: TermCategory, gifFileName: String? = nil) {
+    init(term: Term, id: UUID, lastSucceeded: Date? = nil, starred: Bool = false, progress: ProgressType = .new, category: TermCategory, gifFileName: String? = nil) {
         self.term = term
         self.id = id
         self.lastSucceeded = lastSucceeded
         self.starred = starred
         self.progress = progress
-        self.category = category
-        self.gifFileName = gifFileName ?? term.defaultGifFileName
-    }    
-    init(term: Term, id: UUID, category: TermCategory, gifFileName: String? = nil) {
-        self.term = term
-        self.id = id
-        self.lastSucceeded = nil
-        self.starred = false
-        self.progress = .new
         self.category = category
         self.gifFileName = gifFileName ?? term.defaultGifFileName
     }

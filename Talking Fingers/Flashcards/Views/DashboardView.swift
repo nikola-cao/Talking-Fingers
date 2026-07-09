@@ -62,6 +62,15 @@ struct DashboardView: View {
         flashcardVM.generateDailyReviewQueue(limit: 5)
     }
     
+    // Cards successfully practiced today, capped at the daily target.
+    private var dailyChallengeCompleted: Int {
+        let completedToday = flashcardVM.flashcards.filter { card in
+            guard let last = card.lastSucceeded else { return false }
+            return Calendar.current.isDateInToday(last)
+        }.count
+        return min(completedToday, dailyQueue.requestedLimit)
+    }
+    
     private var categoryScopedCards: [FlashcardModel] {
         // Guard against mismatched remote records: category views should only show
         // cards whose term actually belongs to that category.
@@ -289,7 +298,7 @@ struct DashboardView: View {
                         } label: {
                             DailyChallengeCard(
                                 streak: 3,
-                                completed: dailyQueue.cards.count,
+                                completed: dailyChallengeCompleted,
                                 total: dailyQueue.requestedLimit
                             )
                         }
@@ -513,7 +522,7 @@ struct DashboardView: View {
                 } label: {
                     DailyChallengeCard(
                         streak: 3,
-                        completed: dailyQueue.cards.count,
+                        completed: dailyChallengeCompleted,
                         total: dailyQueue.requestedLimit
                     )
                 }
