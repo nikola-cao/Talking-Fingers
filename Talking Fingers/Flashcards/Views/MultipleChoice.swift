@@ -12,10 +12,8 @@ struct MultipleChoice: View {
 
     // MARK: - Configuration
     let question: String
-    let imageName: String          // SF Symbol or asset name for the sign illustration
     let options: [String]
     let correctAnswer: String
-    var explanationText: String = "People often confuse this sign with Goodbye because..."
 
     // Spaced repetition integration
     let currentCard: FlashcardModel
@@ -42,8 +40,6 @@ struct MultipleChoice: View {
     @State private var showHintPopup: Bool = false
     @State private var showCorrectPopup: Bool = false
     @State private var showIncorrectPopup: Bool = false
-    /// Captured at runtime so the GIF scales to the available window/screen height.
-    @State private var viewHeight: CGFloat = 500
 
     // MARK: - Brand Colors
     private let tfGreen = Color(red: 159/255, green: 192/255, blue: 122/255)
@@ -52,10 +48,8 @@ struct MultipleChoice: View {
     // MARK: - Init
     init(
         question: String,
-        imageName: String,
         options: [String],
         correctAnswer: String,
-        explanationText: String = "People often confuse this sign with Goodbye because...",
         currentCard: FlashcardModel,
         inputMode: Binding<ExerciseInputMode> = .constant(.flashcards),
         onLeave: (() -> Void)? = nil,
@@ -63,10 +57,8 @@ struct MultipleChoice: View {
         progress: Double
     ) {
         self.question = question
-        self.imageName = imageName
         self.options = options
         self.correctAnswer = correctAnswer
-        self.explanationText = explanationText
         self.currentCard = currentCard
         self._inputMode = inputMode
         self.onLeave = onLeave
@@ -571,10 +563,8 @@ struct MultipleChoiceSRTester: View {
             if let current {
                 MultipleChoice(
                     question: "What sign is being shown?",
-                    imageName: "greetingsIllustration",
                     options: currentOptions,
                     correctAnswer: current.term.displayName,
-                    explanationText: "People often confuse this sign with similar motions. Focus on handshape and movement.",
                     currentCard: current,
                     inputMode: .constant(.flashcards),
                     onNext: { next in
@@ -615,10 +605,8 @@ struct MultipleChoiceSRTester: View {
     )
     MultipleChoice(
         question: "What sign is being shown?",
-        imageName: "greetingsIllustration",
         options: ["Hello", "Goodbye", "Wassup", "See you"],
         correctAnswer: "Hello",
-        explanationText: "People often confuse this sign with 'Goodbye' because the hand motion looks similar at a glance.",
         currentCard: card,
         inputMode: .constant(.flashcards),
         onNext: { _ in },
@@ -638,10 +626,8 @@ struct MultipleChoiceSRTester: View {
     )
     return MultipleChoice(
         question: "What sign is being shown?",
-        imageName: "greetingsIllustration",
         options: ["0", "1", "2", "3"],
         correctAnswer: "0",
-        explanationText: "This card verifies that the zero flashcard loads zero.gif.",
         currentCard: card,
         onNext: { _ in },
         progress: 0.0

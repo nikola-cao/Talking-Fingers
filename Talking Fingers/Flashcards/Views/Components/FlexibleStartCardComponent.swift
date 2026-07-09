@@ -39,19 +39,7 @@ enum StartContext {
     var iconName: String {
         switch self {
         case .learn(let cat), .exercise(let cat):
-            switch cat {
-            case .alphabet:             return "a.square"
-            case .numbers:              return "number"
-            case .greetings:            return "hand.wave"
-            case .personalInformation:  return "person.text.rectangle"
-            case .family:               return "figure.2.and.child.holdinghands"
-            case .verbs:                return "bolt"
-            case .dateTime:             return "calendar"
-            case .feelingsEmotions:     return "heart"
-            case .locations:            return "mappin.and.ellipse"
-            case .commonDescriptors:    return "text.magnifyingglass"
-            case .commonObjects:        return "cube"
-            }
+            return cat.iconName
         case .dailyChallenge:
             return "flame.fill"
         }
@@ -140,7 +128,6 @@ struct FlexibleStartCardComponent: View {
                 case .exercise(let category):
                     ExerciseSessionFlow(
                         initialCard: flashcardVM.flashcards.first ?? fallbackCard(for: category),
-                        imageName: context.iconName,
                         targetCount: total,
                         vm: flashcardVM,
                         onLeave: closeAction
@@ -152,7 +139,6 @@ struct FlexibleStartCardComponent: View {
                 case .dailyChallenge:
                     ExerciseSessionFlow(
                         initialCard: flashcardVM.flashcards.first ?? FlashcardModel(term: .hello, id: UUID(), category: .greetings),
-                        imageName: context.iconName,
                         targetCount: total,
                         vm: flashcardVM,
                         onLeave: closeAction
@@ -317,7 +303,6 @@ private struct ExerciseSessionFlow: View {
     /// Re-resolved on each card advance and whenever the user changes `mode`.
     @State private var currentSlotMode: ExerciseInputMode = Bool.random() ? .camera : .flashcards
 
-    let imageName: String
     let targetCount: Int
     let vm: FlashcardVM
     let onLeave: () -> Void
@@ -325,9 +310,8 @@ private struct ExerciseSessionFlow: View {
 
     @Environment(SwiftDataVM.self) private var dataVM
 
-    init(initialCard: FlashcardModel, imageName: String, targetCount: Int, vm: FlashcardVM, onLeave: @escaping () -> Void, onFinished: @escaping () -> Void) {
+    init(initialCard: FlashcardModel, targetCount: Int, vm: FlashcardVM, onLeave: @escaping () -> Void, onFinished: @escaping () -> Void) {
         _currentCard = State(initialValue: initialCard)
-        self.imageName = imageName
         self.targetCount = targetCount
         self.vm = vm
         self.onLeave = onLeave
@@ -361,10 +345,8 @@ private struct ExerciseSessionFlow: View {
     private var flashcardsView: some View {
         MultipleChoice(
             question: "What sign is being shown?",
-            imageName: imageName,
             options: options,
             correctAnswer: currentCard.term.displayName,
-            explanationText: "People often confuse this sign with similar motions. Focus on handshape and movement.",
             currentCard: currentCard,
             inputMode: $mode,
             onLeave: onLeave,

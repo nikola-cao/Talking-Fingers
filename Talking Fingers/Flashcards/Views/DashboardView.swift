@@ -603,28 +603,13 @@ private struct InProgressCard: View {
     let progress: Float
     let backgroundColor: Color
     let borderColor: Color
-    var iconName: String {
-        switch category {
-        case .alphabet:             return "a.square"
-        case .numbers:              return "number"
-        case .greetings:            return "hand.wave"
-        case .personalInformation:  return "person.text.rectangle"
-        case .family:               return "figure.2.and.child.holdinghands"
-        case .verbs:                return "bolt"
-        case .dateTime:             return "calendar"
-        case .feelingsEmotions:     return "heart"
-        case .locations:            return "mappin.and.ellipse"
-        case .commonDescriptors:    return "text.magnifyingglass"
-        case .commonObjects:        return "cube"
-        }
-    }
     
     var body: some View {
         VStack(spacing: 12) {
             
             Spacer(minLength: 0)
 
-            Image(systemName: iconName)
+            Image(systemName: category.iconName)
                 .resizable()
                 .scaledToFit()
                 .frame(height: 70)

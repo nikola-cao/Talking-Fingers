@@ -172,7 +172,7 @@ struct SearchView: View {
                     .fill(Color(red: 248/255, green: 188/255, blue: 57/255))
                     .frame(width: 52, height: 52)
                 
-                Image(systemName: placeholderIcon(for: category))
+                Image(systemName: category.iconName)
                     .font(.jakarta(size: 24, weight: .medium))
                     .foregroundColor(.white)
             }
@@ -240,22 +240,6 @@ struct SearchView: View {
         activeTerm = term
     }
     
-    private func placeholderIcon(for category: TermCategory) -> String {
-        switch category {
-        case .alphabet:             return "a.square"
-        case .numbers:              return "number"
-        case .greetings:            return "hand.wave"
-        case .personalInformation:  return "person.text.rectangle"
-        case .family:               return "figure.2.and.child.holdinghands"
-        case .verbs:                return "bolt"
-        case .dateTime:             return "calendar"
-        case .feelingsEmotions:     return "heart"
-        case .locations:            return "mappin.and.ellipse"
-        case .commonDescriptors:    return "text.magnifyingglass"
-        case .commonObjects:        return "cube"
-        }
-    }
-
     private func subtitle(for category: TermCategory) -> String {
         switch category {
         case .alphabet:             return "Learn fingerspelling letters A–Z"

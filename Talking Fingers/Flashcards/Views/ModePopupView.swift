@@ -32,124 +32,13 @@ struct ModePopupView: View {
                 
 #if os(macOS)
                 VStack(spacing: 16) {
-                    Button {
-                        onLearn()
-                        closePopup()
-                    } label: {
-                        HStack(spacing: 16) {
-                            Image("SentencesComprehendFlowerFull")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 80)
-                            
-                            Text("Learn")
-                                .font(.jakartaTitle)
-                                .foregroundStyle(.black)
-                            
-                            Spacer()
-                        }
-//                        .padding(.horizontal, 24)
-                        .frame(maxWidth: .infinity, minHeight: 110)
-                        .background(Color(red: 0.678, green: 0.808, blue: 0.561, opacity: 0.3))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color(red: 0.678, green: 0.95, blue: 0.561), lineWidth: 1.5)
-                        )
-                        .cornerRadius(24)
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Button {
-                        onExercise()
-                        closePopup()
-                    } label: {
-                        HStack(spacing: 16) {
-                            Image("SentencesSignFlowerFull")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 80)
-                            
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Exercise")
-                                    .font(.jakartaTitle)
-                                    .foregroundStyle(.black)
-                                
-                                if !isExerciseUnlocked {
-                                    Text("Complete Learn first")
-                                        .font(.jakartaCaption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                        }
-//                        .padding(.horizontal, 24)
-                        .frame(maxWidth: .infinity, minHeight: 110)
-                        .background(Color(red: 0.663, green: 0.808, blue: 0.985, opacity: isExerciseUnlocked ? 0.4 : 0.2))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color(red: 0.663, green: 0.85, blue: 0.925).opacity(isExerciseUnlocked ? 1.0 : 0.5), lineWidth: 1.5)
-                        )
-                        .cornerRadius(24)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(!isExerciseUnlocked)
+                    learnButton
+                    exerciseButton
                 }
 #else
                 HStack(spacing: 10) {
-                    
-                    Button {
-                        onLearn()
-                        closePopup()
-                    } label: {
-                        VStack {
-                            Image("SentencesComprehendFlowerFull")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 100)
-                            
-                            Text("Learn")
-                                .font(.jakartaTitle2)
-                                .foregroundStyle(.black)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 220)
-                        .background(Color(red: 0.678, green: 0.808, blue: 0.561, opacity: 0.3))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color(red: 0.678, green: 0.95, blue: 0.561), lineWidth: 1.5)
-                        )
-                        .cornerRadius(24)
-                    }
-                    
-                    Button {
-                        onExercise()
-                        closePopup()
-                    } label: {
-                        VStack {
-                            Image("SentencesSignFlowerFull")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 100)
-                            
-                            Text("Exercise")
-                                .font(.jakartaTitle2)
-                                .foregroundStyle(.black)
-                            
-                            if !isExerciseUnlocked {
-                                Text("Complete Learn first")
-                                    .font(.jakartaCaption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 220)
-                        .background(Color(red: 0.663, green: 0.808, blue: 0.985, opacity: isExerciseUnlocked ? 0.4 : 0.2))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 24)
-                                .stroke(Color(red: 0.663, green: 0.85, blue: 0.925).opacity(isExerciseUnlocked ? 1.0 : 0.5), lineWidth: 1.5)
-                        )
-                        .cornerRadius(24)
-                    }
-                    .disabled(!isExerciseUnlocked)
+                    learnButton
+                    exerciseButton
                 }
 #endif
             }
@@ -167,6 +56,101 @@ struct ModePopupView: View {
         .onAppear {
             animatePopup = true
         }
+    }
+    
+    private var learnButton: some View {
+        modeButton(
+            title: "Learn",
+            imageName: "SentencesComprehendFlowerFull",
+            background: Color(red: 0.678, green: 0.808, blue: 0.561, opacity: 0.3),
+            border: Color(red: 0.678, green: 0.95, blue: 0.561),
+            showLockHint: false
+        ) {
+            onLearn()
+            closePopup()
+        }
+    }
+    
+    private var exerciseButton: some View {
+        modeButton(
+            title: "Exercise",
+            imageName: "SentencesSignFlowerFull",
+            background: Color(red: 0.663, green: 0.808, blue: 0.985, opacity: isExerciseUnlocked ? 0.4 : 0.2),
+            border: Color(red: 0.663, green: 0.85, blue: 0.925).opacity(isExerciseUnlocked ? 1.0 : 0.5),
+            showLockHint: !isExerciseUnlocked
+        ) {
+            onExercise()
+            closePopup()
+        }
+        .disabled(!isExerciseUnlocked)
+    }
+    
+    /// Shared card styling for the two mode buttons; macOS lays the card out
+    /// horizontally, iOS vertically.
+    private func modeButton(
+        title: String,
+        imageName: String,
+        background: Color,
+        border: Color,
+        showLockHint: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+#if os(macOS)
+            HStack(spacing: 16) {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 80)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.jakartaTitle)
+                        .foregroundStyle(.black)
+                    
+                    if showLockHint {
+                        Text("Complete Learn first")
+                            .font(.jakartaCaption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, minHeight: 110)
+            .background(background)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(border, lineWidth: 1.5)
+            )
+            .cornerRadius(24)
+#else
+            VStack {
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 100)
+                
+                Text(title)
+                    .font(.jakartaTitle2)
+                    .foregroundStyle(.black)
+                
+                if showLockHint {
+                    Text("Complete Learn first")
+                        .font(.jakartaCaption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity, minHeight: 220)
+            .background(background)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(border, lineWidth: 1.5)
+            )
+            .cornerRadius(24)
+#endif
+        }
+        .buttonStyle(.plain)
     }
     
     private func closePopup() {

@@ -23,6 +23,22 @@ enum TermCategory: String, CaseIterable, Codable, Hashable {
     var displayName: String {
         self.rawValue.capitalized
     }
+    
+    var iconName: String {
+        switch self {
+        case .alphabet:             return "a.square"
+        case .numbers:              return "number"
+        case .greetings:            return "hand.wave"
+        case .personalInformation:  return "person.text.rectangle"
+        case .family:               return "figure.2.and.child.holdinghands"
+        case .verbs:                return "bolt"
+        case .dateTime:             return "calendar"
+        case .feelingsEmotions:     return "heart"
+        case .locations:            return "mappin.and.ellipse"
+        case .commonDescriptors:    return "text.magnifyingglass"
+        case .commonObjects:        return "cube"
+        }
+    }
 }
 
 enum Term: String, CaseIterable, Codable {
