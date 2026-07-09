@@ -2,369 +2,39 @@
 //  TermGifCatalog.swift
 //  Talking Fingers
 //
-//  Maps flashcard terms to bundled GIF files. Add new entries here as GIF
-//  assets are downloaded and converted.
+//  Resolves the bundled GIF file for a flashcard term. File names follow a
+//  convention (alphabet terms use the uppercase letter, e.g. "A.gif";
+//  everything else uses the lowercase case name, e.g. "hello.gif"), so adding
+//  a GIF for a new term only requires bundling a file with a matching name.
 //
 
 import Foundation
 
 enum TermGifCatalog {
-    static func gifFileName(for term: Term) -> String? {
-        switch term {
-        case .a:
-            return "A.gif"
-        case .b:
-            return "B.gif"
-        case .c:
-            return "C.gif"
-        case .d:
-            return "D.gif"
-        case .e:
-            return "E.gif"
-        case .f:
-            return "F.gif"
-        case .g:
-            return "G.gif"
-        case .h:
-            return "H.gif"
-        case .i:
-            return "I.gif"
-        case .j:
-            return "J.gif"
-        case .k:
-            return "K.gif"
-        case .l:
-            return "L.gif"
-        case .m:
-            return "M.gif"
-        case .n:
-            return "N.gif"
-        case .o:
-            return "O.gif"
-        case .p:
-            return "P.gif"
-        case .q:
-            return "Q.gif"
-        case .r:
-            return "R.gif"
-        case .s:
-            return "S.gif"
-        case .t:
-            return "T.gif"
-        case .u:
-            return "U.gif"
-        case .v:
-            return "V.gif"
-        case .w:
-            return "W.gif"
-        case .x:
-            return "X.gif"
-        case .y:
-            return "Y.gif"
-        case .z:
-            return "Z.gif"
-        case .zero:
-            return "zero.gif"
-        case .one:
-            return "one.gif"
-        case .two:
-            return "two.gif"
-        case .three:
-            return "three.gif"
-        case .four:
-            return "four.gif"
-        case .five:
-            return "five.gif"
-        case .six:
-            return "six.gif"
-        case .seven:
-            return "seven.gif"
-        case .eight:
-            return "eight.gif"
-        case .nine:
-            return "nine.gif"
-        case .ten:
-            return "ten.gif"
-        case .fifteen:
-            return "fifteen.gif"
-        case .twenty:
-            return "twenty.gif"
-        case .hundred:
-            return "hundred.gif"
-        case .hello:
-            return "hello.gif"
-        case .bye:
-            return "bye.gif"
-        case .hi:
-            return "hi.gif"
-        case .good:
-            return "good.gif"
-        case .morning:
-            return "morning.gif"
-        case .afternoon:
-            return "afternoon.gif"
-        case .evening:
-            return "evening.gif"
-        case .night:
-            return "night.gif"
-        case .see:
-            return "see.gif"
-        case .you:
-            return "you.gif"
-        case .later:
-            return "later.gif"
-        case .nice:
-            return "nice.gif"
-        case .meet:
-            return "meet.gif"
-        case .how:
-            return "how.gif"
-//        case .whatUp:
-//            return "whatUp.gif"
-        case .sorry:
-            return "sorry.gif"
-        case .up:
-            return "up.gif"
-        case .go:
-            return "go.gif"
-        case .he:
-            return "he.gif"
-        case .her:
-            return "his.gif"
-        case .his:
-            return "his.gif"
-        case .its:
-            return "its.gif"
-        case .it:
-            return "it.gif"
-        case .she:
-            return "she.gif"
-        case .me:
-            return "me.gif"
-        case .my:
-            return "my.gif"
-        case .our:
-            return "our.gif"
-        case .their:
-            return "their.gif"
-        case .they:
-            return "they.gif"
-        case .we:
-            return "we.gif"
-        case .your:
-            return "your.gif"
-        case .when:
-            return "when.gif"
-        case .where:
-            return "where.gif"
-        case .who:
-            return "who.gif"
-        case .why:
-            return "why.gif"
-        case .student:
-            return "student.gif"
-        case .work:
-            return "work.gif"
-        case .like:
-            return "like.gif"
-        case .live:
-            return "live.gif"
-        case .age:
-            return "age.gif"
-        case .favorite:
-            return "favorite.gif"
-        case .name:
-            return "name.gif"
-        case .what:
-            return "what.gif"
-        case .son:
-            return "son.gif"
-        case .daughter:
-            return "daughter.gif"
-        case .from:
-            return "from.gif"
-        case .family:
-            return "family.gif"
-        case .father:
-            return "father.gif"
-        case .dad:
-            return "dad.gif"
-        case .child:
-            return "child.gif"
-        case .grandfather:
-            return "grandfather.gif"
-        case .grandmother:
-            return "grandmother.gif"
-        case .husband:
-            return "husband.gif"
-        case .mom:
-            return "mom.gif"
-        case .mother:
-            return "mother.gif"
-        case .sister:
-            return "sister.gif"
-        case .wife:
-            return "wife.gif"
-        case .come:
-            return "come.gif"
-        case .drink:
-            return "drink.gif"
-        case .eat:
-            return "eat.gif"
-        case .feel:
-            return "feel.gif"
-        case .finish:
-            return "finish.gif"
-        case .get:
-            return "get.gif"
-        case .give:
-            return "give.gif"
-        case .help:
-            return "help.gif"
-        case .know:
-            return "know.gif"
-        case .make:
-            return "make.gif"
-        case .learn:
-            return "learn.gif"
-        case .play:
-            return "play.gif"
-        case .say:
-            return "say.gif"
-        case .study:
-            return "study.gif"
-        case .take:
-            return "take.gif"
-        case .talk:
-            return "talk.gif"
-        case .teach:
-            return "teach.gif"
-        case .tell:
-            return "tell.gif"
-        case .think:
-            return "think.gif"
-        case .visit:
-            return "visit.gif"
-        case .want:
-            return "want.gif"
-        case .watch:
-            return "watch.gif"
-        case .friday:
-            return "friday.gif"
-        case .monday:
-            return "monday.gif"
-        case .month:
-            return "month.gif"
-        case .now:
-            return "now.gif"
-        case .today:
-            return "today.gif"
-        case .tomorrow:
-            return "tomorrow.gif"
-        case .week:
-            return "week.gif"
-        case .year:
-            return "year.gif"
-        case .yesterday:
-            return "yesterday.gif"
-        case .alone:
-            return "alone.gif"
-        case .angry:
-            return "angry.gif"
-        case .bored:
-            return "bored.gif"
-        case .confused:
-            return "confused.gif"
-        case .excited:
-            return "excited.gif"
-        case .frustrated:
-            return "frustrated.gif"
-        case .happy:
-            return "happy.gif"
-        case .love:
-            return "love.gif"
-        case .nervous:
-            return "nervous.gif"
-        case .sad:
-            return "sad.gif"
-        case .scared:
-            return "scared.gif"
-        case .surprised:
-            return "surprise.gif"
-        case .tired:
-            return "tired.gif"
-        case .class:
-            return "class.gif"
-        case .college:
-            return "college.gif"
-        case .home:
-            return "home.gif"
-        case .hospital:
-            return "hospital.gif"
-        case .house:
-            return "house.gif"
-        case .job:
-            return "job.gif"
-        case .library:
-            return "library.gif"
-        case .office:
-            return "office.gif"
-        case .park:
-            return "park.gif"
-        case .restaurant:
-            return "restaurant.gif"
-        case .school:
-            return "school.gif"
-        case .store:
-            return "store.gif"
-        case .big:
-            return "big.gif"
-        case .bad:
-            return "bad.gif"
-        case .different:
-            return "different.gif"
-        case .less:
-            return "less.gif"
-        case .more:
-            return "more.gif"
-        case .new:
-            return "new.gif"
-        case .old:
-            return "old.gif"
-        case .same:
-            return "same.gif"
-        case .small:
-            return "small.gif"
-        case .together:
-            return "together.gif"
-        case .book:
-            return "book.gif"
-        case .car:
-            return "car.gif"
-        case .computer:
-            return "computer.gif"
-        case .dog:
-            return "dog.gif"
-        case .food:
-            return "food.gif"
-        case .movie:
-            return "movie.gif"
-        case .music:
-            return "music.gif"
-        case .phone:
-            return "phone.gif"
-        case .water:
-            return "water.gif"
-        case .brother:
-            return "brother.gif"
-        case .cat:
-            return "cat.gif"
-        
+    /// Terms whose GIF file doesn't follow the naming convention.
+    private static let overrides: [Term: String] = [
+        .surprised: "surprise.gif",
+        .her: "his.gif", // HIS/HER share one ASL sign; only his.gif is bundled
+    ]
 
-        
-        default:
-            return nil
+    /// Terms mapped to GIF files that actually exist in the app bundle.
+    private static let fileNames: [Term: String] = {
+        var map: [Term: String] = [:]
+        for term in Term.allCases {
+            let name = overrides[term] ?? conventionalFileName(for: term)
+            if Bundle.main.url(forResource: name, withExtension: nil) != nil {
+                map[term] = name
+            }
         }
+        return map
+    }()
+
+    private static func conventionalFileName(for term: Term) -> String {
+        term.category == .alphabet ? "\(term.rawValue).gif" : "\(term).gif"
+    }
+
+    static func gifFileName(for term: Term) -> String? {
+        fileNames[term]
     }
 }
 

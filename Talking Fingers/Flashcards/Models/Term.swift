@@ -91,16 +91,15 @@ enum Term: String, CaseIterable, Codable {
     // case seeYouLater = "SEE-YOU-LATER"
     // case niceMeetYou = "NICE-MEET-YOU"
     // case howYou = "HOW-YOU"
-//     case whatUp = "WHAT-UP"
+    // case whatUp = "WHAT-UP"
     case sorry = "SORRY"
     case up = "UP"
-    
 
     // MARK: - Personal Information
     case name = "NAME"
     case my = "MY"
     case me = "ME"
-//    case you = "YOU"
+    // case you = "YOU" (declared under Greetings)
     case they = "THEY"
     case we = "WE"
     case he = "HE"
@@ -125,7 +124,7 @@ enum Term: String, CaseIterable, Codable {
     case when = "WHEN"
     case `where` = "WHERE"
     case why = "WHY"
-//    case how = "HOW"
+    // case how = "HOW" (declared under Greetings)
 
     // MARK: - Family
     case family = "FAMILY"
@@ -144,10 +143,10 @@ enum Term: String, CaseIterable, Codable {
     case daughter = "DAUGHTER"
 
     // MARK: - Verbs
-//    case go = "GO"
+    // case go = "GO" (declared under Personal Information)
     case come = "COME"
     case want = "WANT"
-//    case dontLike = "DON’T-LIKE"
+    // case dontLike = "DON’T-LIKE"
     case eat = "EAT"
     case drink = "DRINK"
     case study = "STUDY"
@@ -159,7 +158,7 @@ enum Term: String, CaseIterable, Codable {
     case teach = "TEACH"
     case visit = "VISIT"
     case talk = "TALK"
-//    case see = "SEE"
+    // case see = "SEE" (declared under Greetings)
     case make = "MAKE"
     case take = "TAKE"
     case give = "GIVE"
@@ -175,10 +174,10 @@ enum Term: String, CaseIterable, Codable {
     case tomorrow = "TOMORROW"
     case yesterday = "YESTERDAY"
     case now = "NOW"
-//    case later = "LATER"
-//    case morning = "MORNING"
-//    case afternoon = "AFTERNOON"
-//    case night = "NIGHT"
+    // case later = "LATER" (declared under Greetings)
+    // case morning = "MORNING" (declared under Greetings)
+    // case afternoon = "AFTERNOON" (declared under Greetings)
+    // case night = "NIGHT" (declared under Greetings)
     case week = "WEEK"
     case month = "MONTH"
     case year = "YEAR"
@@ -213,7 +212,7 @@ enum Term: String, CaseIterable, Codable {
     case park = "PARK"
     
     // MARK: - Common Descriptors
-//    case good = "GOOD"
+    // case good = "GOOD" (declared under Greetings)
     case bad = "BAD"
     case new = "NEW"
     case old = "OLD"
@@ -248,21 +247,21 @@ enum Term: String, CaseIterable, Codable {
              .u, .v, .w, .x, .y, .z:
             return .alphabet
 
-
         case .zero, .one, .two, .three, .four,
-                .five, .six, .seven, .eight, .nine, .ten, .fifteen, .twenty, .hundred:
+             .five, .six, .seven, .eight, .nine, .ten, .fifteen, .twenty, .hundred:
             return .numbers
 
 //        case .hello, .hi, .goodMorning, .goodAfternoon, .goodNight,
 //             .bye, .seeYouLater, .niceMeetYou, .howYou, .whatUp:
 //            return .greetings
         case .hello, .hi, .good, .morning, .afternoon, .evening, .night,
-                .bye, .see, .you, .later, .nice, .meet, .how, .sorry, .up:
+             .bye, .see, .you, .later, .nice, .meet, .how, .sorry, .up:
             return .greetings
 
-        case .name, .my, .me, .you, .they, .we, .he, .she, .it, .their,
+        // also part of this category: .you, .how (compile to .greetings)
+        case .name, .my, .me, .they, .we, .he, .she, .it, .their,
              .our, .age, .live, .from, .student, .work, .like, .favorite,
-             .go, .who, .what, .when, .where, .why, .how, .his, .her, .your, .its:
+             .go, .who, .what, .when, .where, .why, .his, .her, .your, .its:
             return .personalInformation
 
         case .family, .mother, .father, .mom, .dad, .sister,
@@ -270,14 +269,17 @@ enum Term: String, CaseIterable, Codable {
              .wife, .child, .son, .daughter:
             return .family
 
-        case .go, .come, .want, .eat, .drink,
+        // also part of this category: .go (compiles to .personalInformation),
+        // .see (compiles to .greetings)
+        case .come, .want, .eat, .drink,
              .study, .finish, .help, .play, .watch,
-             .learn, .teach, .visit, .talk, .see, .make, .take,
+             .learn, .teach, .visit, .talk, .make, .take,
              .give, .get, .know, .think, .feel, .say, .tell:
             return .verbs
 
-        case .today, .tomorrow, .yesterday, .now, .later,
-             .morning, .afternoon, .night, .week,
+        // also part of this category: .later, .morning, .afternoon, .night
+        // (compile to .greetings)
+        case .today, .tomorrow, .yesterday, .now, .week,
              .month, .year, .monday, .friday:
             return .dateTime
 
@@ -290,13 +292,14 @@ enum Term: String, CaseIterable, Codable {
              .office, .store, .hospital, .restaurant,
              .library, .park:
             return .locations
-            
-        case .good, .bad, .new, .old, .big, .small,
+
+        // also part of this category: .good (compiles to .greetings)
+        case .bad, .new, .old, .big, .small,
              .together, .alone, .more, .less, .same, .different:
             return .commonDescriptors
-            
+
         case .food, .water, .book, .phone, .computer, .car,
-                .house, .dog, .cat, .movie, .music:
+             .house, .dog, .cat, .movie, .music:
             return .commonObjects
         }
     }
