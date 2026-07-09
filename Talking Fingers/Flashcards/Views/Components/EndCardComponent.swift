@@ -29,7 +29,7 @@ struct EndCardComponent: View {
     
     var body: some View {
         VStack(spacing: verticalStackSpacing) {
-            let isLearnMode = context.title == "Learn"
+            let isLearnMode = context.isLearn
             
             Spacer()
             

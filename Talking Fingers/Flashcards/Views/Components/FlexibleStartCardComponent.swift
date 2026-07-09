@@ -78,6 +78,16 @@ enum StartContext {
             return "dailyChallenge"
         }
     }
+    
+    var isLearn: Bool {
+        if case .learn = self { return true }
+        return false
+    }
+    
+    var isDailyChallenge: Bool {
+        if case .dailyChallenge = self { return true }
+        return false
+    }
 }
 
 struct FlexibleStartCardComponent: View {
@@ -122,7 +132,8 @@ struct FlexibleStartCardComponent: View {
                         vm: flashcardVM,
                         onLeave: closeAction
                     ) {
-                        markLearnCompletedIfNeeded()
+                        // Learn completion is inferred from persisted card progress
+                        // and synced via Firebase; nothing extra to record here.
                         showEndScreen = true
                     }
                     
@@ -161,7 +172,7 @@ struct FlexibleStartCardComponent: View {
         ZStack {
             VStack(spacing: 16) {
                 let lightGreen = Color(red: 0.56, green: 0.72, blue: 0.44)
-                let isDaily = context.title == "Daily Challenge"
+                let isDaily = context.isDailyChallenge
 
                 Spacer()
 
@@ -192,7 +203,7 @@ struct FlexibleStartCardComponent: View {
                     
                     Text(context.subtitle)
                         .font(.jakarta(size: 42, weight: .bold))
-                        .foregroundColor(context.title == "Learn" ? Color(red: 0.56, green: 0.72, blue: 0.44) : Color(red: 0.58, green: 0.72, blue: 0.85))
+                        .foregroundColor(context.isLearn ? Color(red: 0.56, green: 0.72, blue: 0.44) : Color(red: 0.58, green: 0.72, blue: 0.85))
                         .multilineTextAlignment(.center)
                 }
 
@@ -280,11 +291,6 @@ struct FlexibleStartCardComponent: View {
             flashcardVM.flashcards = flashcardVM.generateDailyReviewQueue(limit: total).cards
         }
         flashcardVM.lastCardID = nil
-    }
-    
-    private func markLearnCompletedIfNeeded() {
-        guard case .learn = context else { return }
-        // Completion is inferred from persisted card progress and synced via Firebase.
     }
     
     private func fallbackCards(for category: TermCategory) -> [FlashcardModel] {
