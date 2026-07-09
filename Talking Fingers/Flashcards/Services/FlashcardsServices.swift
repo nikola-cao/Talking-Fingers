@@ -26,7 +26,7 @@ final class FlashcardsServices {
                 "term": card.term.rawValue,
                 "category": card.category.rawValue,
                 "starred": card.starred,
-                "progress": String(describing: card.progress)
+                "progress": card.progress.rawValue
             ]
             data["lastSucceeded"] = card.lastSucceeded
             data["gifFileName"] = card.gifFileName ?? card.term.defaultGifFileName
@@ -55,7 +55,8 @@ final class FlashcardsServices {
                 let categoryString = data["category"] as? String,
                 let category = TermCategory(rawValue: categoryString),
                 let starred = data["starred"] as? Bool,
-                let progress = data["progress"] as? ProgressType
+                let progressString = data["progress"] as? String,
+                let progress = ProgressType(rawValue: progressString)
             else {
                 throw FlashcardsServiceError.decodingError
             }
