@@ -5,14 +5,13 @@
 //  Created by Isha Jain on 2/9/26.
 //
 import Foundation
-import Combine
+import Observation
 import SwiftData
 
 @Observable
 class FlashcardVM {
     var flashcards: [FlashcardModel] = []
     var isLoading = false
-    var isSyncing = false
     private let firebaseService = FlashcardsServices()
     var lastCardID: UUID?
 
@@ -44,26 +43,6 @@ class FlashcardVM {
         ]
     }()
     
-    init() {}
-    
-    func searchFlashCard(input: String) -> [String] {
-        var results = [String]()
-        for card in flashcards {
-            if card.term.rawValue.lowercased().contains(input.lowercased()) {
-                results.append(card.term.rawValue)
-            }
-        }   
-        return results
-    }
-    
-    func filterByCategory(from flashcards: [FlashcardModel], category: TermCategory) -> [FlashcardModel] {
-        flashcards.filter { $0.category == category }
-    }
-    
-    func filterStarred(from flashcards: [FlashcardModel]) -> [FlashcardModel] {
-        flashcards.filter { $0.starred }
-    }
-   
     func returnProgress(flashcards: [FlashcardModel]) -> Float {
         guard !flashcards.isEmpty else { return 0.0 }
         var progressTotal: Float = 0.0
@@ -85,11 +64,10 @@ class FlashcardVM {
 
     
     func loadFlashcards(modelContext: ModelContext) async {
-        
         isLoading = true
         flashcards = fetchFromSwiftData(modelContext)
         isLoading = false
-        isSyncing = true
+
         do {
             let remoteCards = try await firebaseService.downloadFlashcards()
             await saveToSwiftData(remoteCards, modelContext: modelContext)
@@ -97,7 +75,6 @@ class FlashcardVM {
         } catch {
             print("Firebase sync failed: \(error)")
         }
-        isSyncing = false
     }
 
     private func fetchFromSwiftData(_ modelContext: ModelContext) -> [FlashcardModel] {
@@ -135,23 +112,6 @@ class FlashcardVM {
         }
     }
     
-    func updateStatusFull(flashcard: FlashcardModel, progress: ProgressType) -> FlashcardModel {
-        return FlashcardModel(
-            term: flashcard.term,
-            id: flashcard.id,
-            lastSucceeded: flashcard.lastSucceeded,
-            starred: flashcard.starred,
-            progress: progress,
-            category: flashcard.category,
-            gifFileName: flashcard.gifFileName
-        )
-    }
-
-    func updateStatus(for card: FlashcardModel, to newProgress: ProgressType) -> FlashcardModel {
-        card.progress = newProgress
-        return card
-    }
-    
     func handleAnswer(for card: FlashcardModel, correct: Bool, user: User?, dataVM: SwiftDataVM) {
         if let user {
             dataVM.updateStreak(for: user)
@@ -180,14 +140,14 @@ class FlashcardVM {
             newProgress = .learning
         }
 
-        let updatedCard = updateStatus(for: card, to: newProgress)
+        card.progress = newProgress
         if correct {
-            updatedCard.lastSucceeded = Date()
+            card.lastSucceeded = Date()
         }
         
         if let modelContext = dataVM.modelContext {
             Task {
-                await updateFlashcard(updatedCard, modelContext: modelContext)
+                await updateFlashcard(card, modelContext: modelContext)
             }
         }
     }

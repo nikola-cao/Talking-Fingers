@@ -43,20 +43,6 @@ final class SentenceBuilderVM: ObservableObject {
         submitState = .idle
     }
 
-    func moveAnswer(from source: IndexSet, to destination: Int) {
-        let moving = source.map { answer[$0] }
-
-        for i in source.sorted(by: >) {
-            answer.remove(at: i)
-        }
-
-        let removedBefore = source.filter { $0 < destination }.count
-        let adjustedDest = max(0, min(answer.count, destination - removedBefore))
-
-        answer.insert(contentsOf: moving, at: adjustedDest)
-        submitState = .idle
-    }
-
     func reset() {
         bank = exercise.wordBankTokenModels
         answer = []

@@ -33,15 +33,6 @@ class LearnModeVM: ObservableObject {
         flashcard.term.rawValue
     }
 
-    var signImageName: String {
-        "dummySign"
-        // later: flashcard.gifFileName
-    }
-
-    var cameraImageName: String {
-        "dummyCamera"
-    }
-
     var buttonText: String {
         switch state {
         case .initial:
@@ -55,22 +46,10 @@ class LearnModeVM: ObservableObject {
         tfGreen
     }
 
-    var bulbColor: Color {
-        state == .showingHint ? .orange : .gray.opacity(0.5)
-    }
-
-    var showHintButton: Bool {
-        state != .initial
-    }
-
     var showingCamera: Bool {
         state == .practicing || state == .showingHint
     }
 
-    var showingHint: Bool {
-        state == .showingHint
-    }
-    
     var canAdvanceToNextWord: Bool {
         state == .practicing || state == .showingHint ? hasGoodConfidence : true
     }
