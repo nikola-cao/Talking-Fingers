@@ -13,7 +13,6 @@ build/
 *.xcuserstate
 *.xcscmblueprint
 *.xccheckout
-*.pbxproj
 
 # User-specific Xcode settings
 xcuserdata/
