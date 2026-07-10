@@ -65,12 +65,13 @@ class FlashcardVM {
     
     func loadFlashcards(modelContext: ModelContext) async {
         isLoading = true
+        seedMissingCards(modelContext)
         flashcards = fetchFromSwiftData(modelContext)
         isLoading = false
 
         do {
-            let remoteCards = try await firebaseService.downloadFlashcards()
-            await saveToSwiftData(remoteCards, modelContext: modelContext)
+            let remoteProgress = try await firebaseService.downloadProgress()
+            applyRemoteProgress(remoteProgress, modelContext: modelContext)
             flashcards = fetchFromSwiftData(modelContext)
         } catch {
             print("Firebase sync failed: \(error)")
@@ -82,23 +83,29 @@ class FlashcardVM {
         return (try? modelContext.fetch(descriptor)) ?? []
     }
 
-    private func saveToSwiftData(_ cards: [FlashcardModel], modelContext: ModelContext) async {
-        for card in cards {
-            let cardID = card.id
-            let descriptor = FetchDescriptor<FlashcardModel>(
-                predicate: #Predicate<FlashcardModel> { flashcard in
-                    flashcard.id == cardID
-                }
-            )
-            if let existing = try? modelContext.fetch(descriptor).first {
-                existing.term = card.term
-                existing.category = card.category
-                existing.starred = card.starred
-                existing.progress = card.progress
-                existing.lastSucceeded = card.lastSucceeded
-                existing.gifFileName = card.gifFileName
-            } else {
-                modelContext.insert(card)
+    /// Ensures the local deck contains one card per `Term`. The deck content is
+    /// defined by the app itself; Firestore only stores per-user progress.
+    private func seedMissingCards(_ modelContext: ModelContext) {
+        let existingTerms = Set(fetchFromSwiftData(modelContext).map(\.term))
+        let missingTerms = Term.allCases.filter { !existingTerms.contains($0) }
+        guard !missingTerms.isEmpty else { return }
+
+        for term in missingTerms {
+            modelContext.insert(FlashcardModel(term: term, id: UUID(), category: term.category))
+        }
+        try? modelContext.save()
+    }
+
+    /// Applies downloaded per-user progress onto the locally seeded deck, matching by term.
+    private func applyRemoteProgress(_ remoteProgress: [FlashcardsServices.CardProgress], modelContext: ModelContext) {
+        guard !remoteProgress.isEmpty else { return }
+
+        let cardsByTerm = Dictionary(grouping: fetchFromSwiftData(modelContext), by: \.term)
+        for progress in remoteProgress {
+            for card in cardsByTerm[progress.term] ?? [] {
+                card.progress = progress.progress
+                card.starred = progress.starred
+                card.lastSucceeded = progress.lastSucceeded
             }
         }
         try? modelContext.save()
@@ -108,7 +115,11 @@ class FlashcardVM {
         try? modelContext.save()
         
         Task {
-            try? await firebaseService.uploadFlashcards([card])
+            do {
+                try await firebaseService.uploadProgress(for: [card])
+            } catch {
+                print("Failed to upload progress for \(card.term.rawValue): \(error)")
+            }
         }
     }
     

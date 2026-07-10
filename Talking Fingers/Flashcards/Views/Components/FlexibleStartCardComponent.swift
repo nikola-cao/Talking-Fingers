@@ -273,7 +273,7 @@ struct FlexibleStartCardComponent: View {
             flashcardVM.flashcards = categoryCards.isEmpty ? fallbackCards(for: category) : categoryCards
         case .dailyChallenge:
             let validCards = sourceCards.filter { $0.term.category == $0.category }
-            flashcardVM.flashcards = validCards.isEmpty ? FlashcardVM.dummyFlashcards : validCards
+            flashcardVM.flashcards = validCards
             flashcardVM.flashcards = flashcardVM.generateDailyReviewQueue(limit: total).cards
         }
         flashcardVM.lastCardID = nil

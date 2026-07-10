@@ -5,57 +5,72 @@
 //  Created by Na Hua on 2/12/26.
 //
 import Foundation
+import FirebaseAuth
 import FirebaseFirestore
 
+/// Syncs per-user flashcard progress with Firestore.
+///
+/// Card content (term, category, gif) is defined by the `Term` enum bundled in
+/// the app, so only the user's mutable state is stored remotely — one document
+/// per term at `Users/{uid}/cardProgress/{term}`. Terms are stable across
+/// devices, unlike the locally generated card UUIDs.
 final class FlashcardsServices {
 
+    struct CardProgress {
+        let term: Term
+        let progress: ProgressType
+        let starred: Bool
+        let lastSucceeded: Date?
+        let updatedAt: Date?
+    }
+
     private let db = Firestore.firestore()
-    private let collectionName = "flashcards"
 
-    func uploadFlashcards(_ flashcards: [FlashcardModel]) async throws {
-        let collectionRef = db.collection(collectionName)
+    /// `nil` when no user is signed in, in which case sync is skipped
+    /// and the app operates on local data only.
+    private var progressCollection: CollectionReference? {
+        guard let uid = Auth.auth().currentUser?.uid else { return nil }
+        return db.collection("Users").document(uid).collection("cardProgress")
+    }
 
-        for card in flashcards {
+    /// Uploads the user's progress for the given cards in a single batched write.
+    func uploadProgress(for cards: [FlashcardModel]) async throws {
+        guard let collection = progressCollection, !cards.isEmpty else { return }
+
+        let batch = db.batch()
+        for card in cards {
             var data: [String: Any] = [
-                "id": card.id.uuidString,
-                "term": card.term.rawValue,
-                "category": card.category.rawValue,
+                "progress": card.progress.rawValue,
                 "starred": card.starred,
-                "progress": card.progress.rawValue
+                "updatedAt": FieldValue.serverTimestamp()
             ]
-            data["lastSucceeded"] = card.lastSucceeded
-            data["gifFileName"] = card.gifFileName ?? card.term.defaultGifFileName
-            try await collectionRef.document(card.id.uuidString).setData(data)
+            if let lastSucceeded = card.lastSucceeded {
+                data["lastSucceeded"] = Timestamp(date: lastSucceeded)
+            }
+            batch.setData(data, forDocument: collection.document(card.term.rawValue), merge: true)
         }
-    }
-    
-    /// Skips documents that fail to decode rather than failing the whole download.
-    func downloadFlashcards() async throws -> [FlashcardModel] {
-        let snapshot = try await db.collection(collectionName).getDocuments()
-        return snapshot.documents.compactMap { flashcard(from: $0.data()) }
+        try await batch.commit()
     }
 
-    private func flashcard(from data: [String: Any]) -> FlashcardModel? {
-        guard let id = UUID(uuidString: data["id"] as? String ?? ""),
-              let termString = data["term"] as? String,
-              let term = Term(rawValue: termString),
-              let categoryString = data["category"] as? String,
-              let category = TermCategory(rawValue: categoryString),
-              let starred = data["starred"] as? Bool,
-              let progressString = data["progress"] as? String else {
-            return nil
+    /// Downloads all progress documents for the signed-in user.
+    /// Documents that fail to decode (e.g. for terms removed from the app) are skipped.
+    func downloadProgress() async throws -> [CardProgress] {
+        guard let collection = progressCollection else { return [] }
+
+        let snapshot = try await collection.getDocuments()
+        return snapshot.documents.compactMap { document in
+            guard let term = Term(rawValue: document.documentID) else { return nil }
+            let data = document.data()
+            guard let progressString = data["progress"] as? String,
+                  let progress = ProgressType(rawValue: progressString) else { return nil }
+
+            return CardProgress(
+                term: term,
+                progress: progress,
+                starred: data["starred"] as? Bool ?? false,
+                lastSucceeded: (data["lastSucceeded"] as? Timestamp)?.dateValue(),
+                updatedAt: (data["updatedAt"] as? Timestamp)?.dateValue()
+            )
         }
-
-        let progress = ProgressType(rawValue: progressString.lowercased()) ?? .new
-
-        return FlashcardModel(
-            term: term,
-            id: id,
-            lastSucceeded: (data["lastSucceeded"] as? Timestamp)?.dateValue(),
-            starred: starred,
-            progress: progress,
-            category: category,
-            gifFileName: data["gifFileName"] as? String
-        )
     }
 }
