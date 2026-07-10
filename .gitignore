@@ -118,3 +118,8 @@ training_data/
 .venv/
 __pycache__/
 *.pyc
+
+# =========================
+# Secrets
+# =========================
+Scripts/serviceAccountKey.json
