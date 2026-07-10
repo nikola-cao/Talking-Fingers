@@ -69,12 +69,46 @@ class FlashcardVM {
         flashcards = fetchFromSwiftData(modelContext)
         isLoading = false
 
+        // Push local changes first so offline progress can't be rolled back
+        // by the download below.
+        await pushPendingChanges(modelContext)
+
         do {
             let remoteProgress = try await firebaseService.downloadProgress()
             applyRemoteProgress(remoteProgress, modelContext: modelContext)
             flashcards = fetchFromSwiftData(modelContext)
         } catch {
             print("Firebase sync failed: \(error)")
+        }
+
+        startListening(modelContext: modelContext)
+    }
+
+    /// Uploads any cards whose local changes haven't been confirmed by Firestore yet
+    /// (failed uploads, changes made offline, or changes made while signed out).
+    private func pushPendingChanges(_ modelContext: ModelContext) async {
+        let descriptor = FetchDescriptor<FlashcardModel>(
+            predicate: #Predicate<FlashcardModel> { $0.needsSync }
+        )
+        guard let dirtyCards = try? modelContext.fetch(descriptor), !dirtyCards.isEmpty else { return }
+
+        do {
+            try await firebaseService.uploadProgress(for: dirtyCards)
+            await MainActor.run {
+                for card in dirtyCards { card.needsSync = false }
+                try? modelContext.save()
+            }
+        } catch {
+            print("Failed to push \(dirtyCards.count) pending change(s), will retry next sync: \(error)")
+        }
+    }
+
+    /// Mirrors remote changes (e.g. from another device) into local storage as
+    /// they happen. Progress is applied in place on the existing model objects,
+    /// so active session queues built from `flashcards` are not disturbed.
+    private func startListening(modelContext: ModelContext) {
+        firebaseService.startListening { [weak self] remoteProgress in
+            self?.applyRemoteProgress(remoteProgress, modelContext: modelContext)
         }
     }
 
@@ -96,29 +130,44 @@ class FlashcardVM {
         try? modelContext.save()
     }
 
-    /// Applies downloaded per-user progress onto the locally seeded deck, matching by term.
+    /// Applies remote per-user progress onto the locally seeded deck, matching by term.
+    /// Newest action wins: a remote value is only applied when its `updatedAt` is
+    /// strictly newer than the local change, so offline progress is never rolled back.
     private func applyRemoteProgress(_ remoteProgress: [FlashcardsServices.CardProgress], modelContext: ModelContext) {
         guard !remoteProgress.isEmpty else { return }
 
         let cardsByTerm = Dictionary(grouping: fetchFromSwiftData(modelContext), by: \.term)
         for progress in remoteProgress {
             for card in cardsByTerm[progress.term] ?? [] {
+                if let localUpdatedAt = card.progressUpdatedAt,
+                   (progress.updatedAt ?? .distantPast) <= localUpdatedAt {
+                    continue
+                }
                 card.progress = progress.progress
                 card.starred = progress.starred
                 card.lastSucceeded = progress.lastSucceeded
+                card.progressUpdatedAt = progress.updatedAt
+                card.needsSync = false
             }
         }
         try? modelContext.save()
     }
 
+    /// Persists a locally changed card and uploads its progress. If the upload
+    /// fails (e.g. offline), the card stays flagged and is retried on the next sync.
     func updateFlashcard(_ card: FlashcardModel, modelContext: ModelContext) async {
+        card.markProgressChanged()
         try? modelContext.save()
         
         Task {
             do {
                 try await firebaseService.uploadProgress(for: [card])
+                await MainActor.run {
+                    card.needsSync = false
+                    try? modelContext.save()
+                }
             } catch {
-                print("Failed to upload progress for \(card.term.rawValue): \(error)")
+                print("Failed to upload progress for \(card.term.rawValue), will retry next sync: \(error)")
             }
         }
     }

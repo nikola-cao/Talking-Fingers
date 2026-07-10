@@ -10,10 +10,13 @@ import FirebaseFirestore
 
 /// Syncs per-user flashcard progress with Firestore.
 ///
-/// Card content (term, category, gif) is defined by the `Term` enum bundled in
-/// the app, so only the user's mutable state is stored remotely — one document
-/// per term at `Users/{uid}/cardProgress/{term}`. Terms are stable across
-/// devices, unlike the locally generated card UUIDs.
+/// The app bundle is the authority on what cards exist (the `Term` enum);
+/// Firestore only transports each user's mutable progress between devices —
+/// one document per term at `Users/{uid}/cardProgress/{term}`.
+///
+/// `updatedAt` records when the user performed the action (client time), not
+/// when it was uploaded, so merging is "newest action wins" even for changes
+/// that were made offline and uploaded later.
 final class FlashcardsServices {
 
     struct CardProgress {
@@ -25,6 +28,11 @@ final class FlashcardsServices {
     }
 
     private let db = Firestore.firestore()
+    private var listener: ListenerRegistration?
+
+    deinit {
+        stopListening()
+    }
 
     /// `nil` when no user is signed in, in which case sync is skipped
     /// and the app operates on local data only.
@@ -42,7 +50,7 @@ final class FlashcardsServices {
             var data: [String: Any] = [
                 "progress": card.progress.rawValue,
                 "starred": card.starred,
-                "updatedAt": FieldValue.serverTimestamp()
+                "updatedAt": Timestamp(date: card.progressUpdatedAt ?? Date())
             ]
             if let lastSucceeded = card.lastSucceeded {
                 data["lastSucceeded"] = Timestamp(date: lastSucceeded)
@@ -53,24 +61,49 @@ final class FlashcardsServices {
     }
 
     /// Downloads all progress documents for the signed-in user.
-    /// Documents that fail to decode (e.g. for terms removed from the app) are skipped.
     func downloadProgress() async throws -> [CardProgress] {
         guard let collection = progressCollection else { return [] }
 
         let snapshot = try await collection.getDocuments()
-        return snapshot.documents.compactMap { document in
-            guard let term = Term(rawValue: document.documentID) else { return nil }
-            let data = document.data()
-            guard let progressString = data["progress"] as? String,
-                  let progress = ProgressType(rawValue: progressString) else { return nil }
+        return snapshot.documents.compactMap(Self.cardProgress(from:))
+    }
 
-            return CardProgress(
-                term: term,
-                progress: progress,
-                starred: data["starred"] as? Bool ?? false,
-                lastSucceeded: (data["lastSucceeded"] as? Timestamp)?.dateValue(),
-                updatedAt: (data["updatedAt"] as? Timestamp)?.dateValue()
-            )
+    /// Observes the user's progress in real time so changes made on another
+    /// device appear without relaunching. Snapshots that only echo this
+    /// device's own pending writes are skipped. Replaces any previous listener.
+    func startListening(onChange: @escaping ([CardProgress]) -> Void) {
+        stopListening()
+        guard let collection = progressCollection else { return }
+
+        listener = collection.addSnapshotListener { snapshot, error in
+            guard let snapshot else {
+                print("Progress listener error: \(String(describing: error))")
+                return
+            }
+            guard !snapshot.metadata.hasPendingWrites else { return }
+            onChange(snapshot.documents.compactMap(Self.cardProgress(from:)))
         }
+    }
+
+    func stopListening() {
+        listener?.remove()
+        listener = nil
+    }
+
+    /// Documents that fail to decode (e.g. for terms removed from the app) are skipped;
+    /// the app bundle is the authority on which terms exist.
+    private static func cardProgress(from document: QueryDocumentSnapshot) -> CardProgress? {
+        guard let term = Term(rawValue: document.documentID) else { return nil }
+        let data = document.data()
+        guard let progressString = data["progress"] as? String,
+              let progress = ProgressType(rawValue: progressString) else { return nil }
+
+        return CardProgress(
+            term: term,
+            progress: progress,
+            starred: data["starred"] as? Bool ?? false,
+            lastSucceeded: (data["lastSucceeded"] as? Timestamp)?.dateValue(),
+            updatedAt: (data["updatedAt"] as? Timestamp)?.dateValue()
+        )
     }
 }

@@ -47,12 +47,19 @@ class SwiftDataVM {
         guard flashcards.count == scores.count else { return }
         
         for index in 0..<scores.count {
+            let card = flashcards[index]
+            let previousProgress = card.progress
             if scores[index] == 1 {
-                flashcards[index].progress = flashcards[index].progress.increase()
+                card.progress = previousProgress.increase()
             } else if scores[index] == -1 {
-                flashcards[index].progress = flashcards[index].progress.decrease()
+                card.progress = previousProgress.decrease()
+            }
+            if card.progress != previousProgress {
+                // Flag for upload; the next flashcard sync pass pushes it to Firestore.
+                card.markProgressChanged()
             }
         }
+        try? modelContext?.save()
     }
     // MARK: - AI Sentence Comprehension Grading
     func gradeSentenceComprehension(correctGloss: [Term], userAnswers: [String]) -> [Int] {
