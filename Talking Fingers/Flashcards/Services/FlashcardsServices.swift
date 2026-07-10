@@ -60,17 +60,10 @@ final class FlashcardsServices {
         try await batch.commit()
     }
 
-    /// Downloads all progress documents for the signed-in user.
-    func downloadProgress() async throws -> [CardProgress] {
-        guard let collection = progressCollection else { return [] }
-
-        let snapshot = try await collection.getDocuments()
-        return snapshot.documents.compactMap(Self.cardProgress(from:))
-    }
-
-    /// Observes the user's progress in real time so changes made on another
-    /// device appear without relaunching. Snapshots that only echo this
-    /// device's own pending writes are skipped. Replaces any previous listener.
+    /// Observes the user's progress in real time. The first snapshot hydrates
+    /// local state on launch; later snapshots apply changes in place.
+    /// Snapshots that only echo this device's own pending writes are skipped.
+    /// Replaces any previous listener.
     func startListening(onChange: @escaping ([CardProgress]) -> Void) {
         stopListening()
         guard let collection = progressCollection else { return }

@@ -14,6 +14,9 @@ class FlashcardVM {
     var isLoading = false
     private let firebaseService = FlashcardsServices()
     var lastCardID: UUID?
+    /// Set before attaching the listener so the first snapshot refreshes `flashcards`
+    /// after merging remote progress (replaces the one-time launch download).
+    private var refreshFlashcardsOnNextSnapshot = false
 
     static let dummyFlashcards: [FlashcardModel] = {
         let calendar = Calendar.current
@@ -70,17 +73,10 @@ class FlashcardVM {
         isLoading = false
 
         // Push local changes first so offline progress can't be rolled back
-        // by the download below.
+        // when the listener delivers remote state.
         await pushPendingChanges(modelContext)
 
-        do {
-            let remoteProgress = try await firebaseService.downloadProgress()
-            applyRemoteProgress(remoteProgress, modelContext: modelContext)
-            flashcards = fetchFromSwiftData(modelContext)
-        } catch {
-            print("Firebase sync failed: \(error)")
-        }
-
+        refreshFlashcardsOnNextSnapshot = true
         startListening(modelContext: modelContext)
     }
 
@@ -108,7 +104,12 @@ class FlashcardVM {
     /// so active session queues built from `flashcards` are not disturbed.
     private func startListening(modelContext: ModelContext) {
         firebaseService.startListening { [weak self] remoteProgress in
-            self?.applyRemoteProgress(remoteProgress, modelContext: modelContext)
+            guard let self else { return }
+            self.applyRemoteProgress(remoteProgress, modelContext: modelContext)
+            if self.refreshFlashcardsOnNextSnapshot {
+                self.refreshFlashcardsOnNextSnapshot = false
+                self.flashcards = self.fetchFromSwiftData(modelContext)
+            }
         }
     }
 
