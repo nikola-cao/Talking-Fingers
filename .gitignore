@@ -123,3 +123,8 @@ __pycache__/
 # Secrets
 # =========================
 Scripts/serviceAccountKey.json
+
+# =========================
+# Claude Code
+# =========================
+.claude/settings.local.json
