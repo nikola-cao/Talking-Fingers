@@ -93,7 +93,7 @@ struct GenerateSentencesView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(hex: "#F0F0F0"), lineWidth: 1.5)
+                            .stroke(TFColors.borderLight, lineWidth: 1.5)
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
@@ -122,7 +122,7 @@ struct GenerateSentencesView: View {
                         .padding(.vertical, 12)
                 }
             }
-            .background(Color(hex: "#97C171").opacity(canGenerate ? 1.0 : 0.5))
+            .background(TFColors.green.opacity(canGenerate ? 1.0 : 0.5))
             .cornerRadius(20)
             .disabled(!canGenerate)
         }
@@ -181,16 +181,16 @@ struct CategoryButton: View {
         Button(action: action) {
             Text(category.rawValue.capitalized)
                 .font(.jakarta(size: 17, weight: .medium))
-                .foregroundColor(isSelected ? Color(hex: "#ECA509") : Color(hex: "#464646"))
+                .foregroundColor(isSelected ? TFColors.amber : TFColors.darkerGray)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(isSelected ? Color(hex: "#FDF2D8") : .white)
+                        .fill(isSelected ? TFColors.paleGold : .white)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(isSelected ? Color(hex: "#ECA509") : Color(hex: "#F0F0F0"), lineWidth: isSelected ? 0.5 : 1.5)
+                        .strokeBorder(isSelected ? TFColors.amber : TFColors.borderLight, lineWidth: isSelected ? 0.5 : 1.5)
                 )
         }
         .buttonStyle(.plain)

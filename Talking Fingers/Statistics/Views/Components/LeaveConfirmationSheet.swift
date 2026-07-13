@@ -12,7 +12,7 @@ struct LeaveConfirmationSheet: View {
     var onSave: () -> Void
 
     private let dontSaveRed = Color(hex: "#E85C5C")
-    private let saveGreen = Color(hex: "#97C171")
+    private let saveGreen = TFColors.green
 
     var body: some View {
         ZStack {
@@ -26,7 +26,7 @@ struct LeaveConfirmationSheet: View {
 
                 Text("If you'd like to be able to come back to this practice, tap Save.")
                     .font(.jakarta(size: 15, weight: .regular))
-                    .foregroundColor(Color(hex: "#767676"))
+                    .foregroundColor(TFColors.textGray)
                     .fixedSize(horizontal: false, vertical: true)
 
                 HStack(spacing: 12) {

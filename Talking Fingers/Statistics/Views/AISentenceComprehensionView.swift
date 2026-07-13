@@ -27,9 +27,9 @@ struct AISentenceComprehensionView: View {
     @State private var macKeyMonitor: Any?
     #endif
 
-    private let chipTextColor = Color(hex: "#464646")
-    private let chipBorderColor = Color(hex: "#F0F0F0")
-    private let chipPlaceholderColor = Color(hex: "#FDF2D8")
+    private let chipTextColor = TFColors.darkerGray
+    private let chipBorderColor = TFColors.borderLight
+    private let chipPlaceholderColor = TFColors.paleGold
 
     private var glossTerms: [Term] { sentenceModel.gloss }
 
@@ -52,7 +52,7 @@ struct AISentenceComprehensionView: View {
                     actionButton(
                         title: "Submit",
                         foreground: .white,
-                        background: Color(hex: "#97C171")
+                        background: TFColors.green
                     ) { submit() }
                     .opacity(canSubmitAnswer ? 1.0 : 0.5)
                     .disabled(!canSubmitAnswer)
@@ -103,7 +103,7 @@ struct AISentenceComprehensionView: View {
                         .font(.jakarta(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: 28, height: 28)
-                        .background(Color(hex: "#97C171"))
+                        .background(TFColors.green)
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -113,7 +113,7 @@ struct AISentenceComprehensionView: View {
                 HStack(spacing: 6) {
                     ForEach(Array(glossTerms.enumerated()), id: \.offset) { index, _ in
                         Circle()
-                            .fill(index == clampedMacCarouselIndex ? Color(hex: "#97C171") : Color.gray.opacity(0.3))
+                            .fill(index == clampedMacCarouselIndex ? TFColors.green : Color.gray.opacity(0.3))
                             .frame(width: 7, height: 7)
                     }
                 }
@@ -125,7 +125,7 @@ struct AISentenceComprehensionView: View {
                         .font(.jakarta(size: 14, weight: .semibold))
                         .foregroundColor(.white)
                         .frame(width: 28, height: 28)
-                        .background(Color(hex: "#97C171"))
+                        .background(TFColors.green)
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -238,9 +238,9 @@ struct AISentenceComprehensionView: View {
     private var answerBorderColor: Color {
         switch submitState {
         case .correct:
-            return Color(hex: "#EAF3E3")
+            return TFColors.paleGreen
         case .incorrect:
-            return Color(hex: "#FFE0E1")
+            return TFColors.paleRed
         case .idle:
             return Color.gray.opacity(0.35)
         }

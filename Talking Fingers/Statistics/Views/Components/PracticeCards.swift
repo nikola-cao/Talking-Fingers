@@ -134,7 +134,7 @@ struct TrainingCard: View {
                         .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(Color(hex: "#97C171"))
+                                .fill(TFColors.green)
                         )
                 }
                 .buttonStyle(.plain)
@@ -148,7 +148,7 @@ struct TrainingCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 17, style: .continuous)
-                .stroke(Color(hex: "#DDDDDD"), lineWidth: 1)
+                .stroke(TFColors.border, lineWidth: 1)
         )
         .contentShape(Rectangle())
         .onTapGesture {
@@ -175,7 +175,7 @@ struct TrainingCard: View {
             .padding(.vertical, 4)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(item.isComplete ? Color(hex: "#EAF3E3") : Color.gray.opacity(0.15))
+                    .fill(item.isComplete ? TFColors.paleGreen : Color.gray.opacity(0.15))
             )
     }
 
@@ -237,7 +237,7 @@ struct TrainingItem: Identifiable {
 
     var accuracyColor: Color {
         guard let acc = accuracy else { return Color.gray }
-        if acc >= 80 { return Color(hex: "#EAF3E3") }
+        if acc >= 80 { return TFColors.paleGreen }
         if acc >= 60 { return Color(hex: "#FACD6B") }
         return Color(hex: "#FA6B6E")
     }

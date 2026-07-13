@@ -64,7 +64,7 @@ struct PageOneContent: View {
     let sentenceModel: AISentenceModel
     @Binding var showGloss: Bool
 
-    private let glossGold = Color(hex: "#ECA509")
+    private let glossGold = TFColors.amber
 
     private var glossLineString: String {
         sentenceModel.gloss
@@ -79,7 +79,7 @@ struct PageOneContent: View {
 
             Text(sentenceModel.sentence)
                 .font(.jakarta(size: 40, weight: .semibold))
-                .foregroundColor(Color(hex: "#464646"))
+                .foregroundColor(TFColors.darkerGray)
                 .multilineTextAlignment(.leading)
 
             VStack(alignment: .leading, spacing: 10) {

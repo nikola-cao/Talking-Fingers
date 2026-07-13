@@ -23,11 +23,11 @@ struct SessionCompletionView: View {
 
     private let extendFill = Color(hex: "#D6ECC4")
     private let extendText = Color(hex: "#3D6B2A")
-    private let finishGreen = Color(hex: "#97C171")
+    private let finishGreen = TFColors.green
 
-    private let accentHigh = Color(hex: "#71A046")
-    private let accentMed = Color(hex: "#ECA509")
-    private let accentLow = Color(hex: "#F46769")
+    private let accentHigh = TFColors.deepGreen
+    private let accentMed = TFColors.amber
+    private let accentLow = TFColors.red
     /// Fills only the large session score ring (softer than accent).
     private let scoreRingFillHigh = Color(hex: "#B1D094")
     private let scoreRingFillMed = Color(hex: "#FACD6B")
@@ -205,7 +205,7 @@ struct SessionCompletionView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color(hex: "#F0F0F0"), lineWidth: 1.5)
+                .stroke(TFColors.borderLight, lineWidth: 1.5)
         )
     }
 
@@ -213,16 +213,16 @@ struct SessionCompletionView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.jakarta(size: 15, weight: .medium))
-                .foregroundColor(Color(hex: "#464646"))
+                .foregroundColor(TFColors.darkerGray)
 
             HStack(alignment: .center, spacing: 12) {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(Color(hex: "#A9CEEC26"))
+                            .fill(TFColors.barTrackBlue)
                             .frame(height: 8)
                         Capsule()
-                            .fill(Color(hex: "#58A0DA"))
+                            .fill(TFColors.blue)
                             .frame(width: max(6, CGFloat(progress) * geo.size.width), height: 8)
                     }
                 }
@@ -230,7 +230,7 @@ struct SessionCompletionView: View {
 
                 Image(systemName: "medal.fill")
                     .font(.jakarta(size: 18, weight: .medium))
-                    .foregroundColor(Color(hex: "#A9CEEC"))
+                    .foregroundColor(TFColors.lightBlue)
                     .frame(width: 22, alignment: .center)
             }
         }

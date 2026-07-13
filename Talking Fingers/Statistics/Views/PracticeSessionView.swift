@@ -32,10 +32,10 @@ struct PracticeSessionView: View {
     /// sentence transition).
     @State private var sessionCameraVM = CameraVM()
 
-    private let barBlue = Color(hex: "#58A0DA")
-    private let barTrack = Color(hex: "#A9CEEC26")
-    private let finishGreen = Color(hex: "#97C171")
-    private let subtitleBlue = Color(hex: "#2A7BBC")
+    private let barBlue = TFColors.blue
+    private let barTrack = TFColors.barTrackBlue
+    private let finishGreen = TFColors.green
+    private let subtitleBlue = TFColors.headerBlue
 
     init(
         sentences: Binding<[AISentenceModel]>,
@@ -160,9 +160,9 @@ struct PracticeSessionView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "door.left.hand.open")
                                 .font(.jakarta(size: 16, weight: .medium))
-                                .foregroundColor(Color(hex: "#B3B3B3"))
+                                .foregroundColor(TFColors.lightGray)
                             Text("Leave")
-                                .foregroundColor(Color(hex: "#B3B3B3"))
+                                .foregroundColor(TFColors.lightGray)
                                 .font(.jakarta(size: 16, weight: .medium))
                         }
                     }
@@ -172,7 +172,7 @@ struct PracticeSessionView: View {
 
                     Text("Practice: \(practiceTitle)")
                         .font(.jakarta(size: 16, weight: .medium))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                 }
                 .padding(.horizontal, 24)
                 #if os(macOS)

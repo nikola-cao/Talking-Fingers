@@ -6,7 +6,7 @@ struct PracticeEntryView: View {
     var categories: [TermCategory]
     var flowerAssetName: String
 
-    private let chipTextColor = Color(hex: "#ECA509")
+    private let chipTextColor = TFColors.amber
 
     var body: some View {
         VStack(spacing: 0) {
@@ -14,14 +14,14 @@ struct PracticeEntryView: View {
 
             Text(practiceTitle)
                 .font(.jakarta(size: 40, weight: .bold))
-                .foregroundColor(Color(hex: "#464646"))
+                .foregroundColor(TFColors.darkerGray)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
 
             Text("\(remainingSentenceCount) sentence\(remainingSentenceCount == 1 ? "" : "s") to go!")
                 .font(.jakarta(size: 20, weight: .medium))
-                .foregroundColor(Color(hex: "#767676"))
+                .foregroundColor(TFColors.textGray)
                 .padding(.top, 20)
 
             if !categories.isEmpty {
@@ -58,10 +58,10 @@ struct PracticeEntryView: View {
         HStack(spacing: 3) {
             Image(systemName: symbolName(for: category))
                 .font(.jakarta(size: 17, weight: .regular))
-                .foregroundColor(Color(hex: "#ECA509"))
+                .foregroundColor(TFColors.amber)
             Text(category.displayName)
                 .font(.jakarta(size: 17, weight: .regular))
-                .foregroundColor(Color(hex: "#ECA509"))
+                .foregroundColor(TFColors.amber)
         }
         .foregroundColor(chipTextColor)
         .padding(.horizontal, 12)
@@ -72,7 +72,7 @@ struct PracticeEntryView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .strokeBorder(Color(hex: "#F8BC3A"), lineWidth: 0.5)
+                .strokeBorder(TFColors.gold, lineWidth: 0.5)
         )
     }
 

@@ -14,15 +14,15 @@ struct ComprehensionAnswerFeedbackOverlay: View {
     var onContinue: () -> Void
 
     private var textAccent: Color {
-        isCorrect ? Color(hex: "#71A046") : Color(hex: "#EF1013")
+        isCorrect ? TFColors.deepGreen : Color(hex: "#EF1013")
     }
 
     private var continueButtonColor: Color {
-        isCorrect ? Color(hex: "#97C171") : Color(hex: "#F46769")
+        isCorrect ? TFColors.green : TFColors.red
     }
 
     private var overlayBackground: Color {
-        isCorrect ? Color(hex: "#EAF3E3") : Color(hex: "#FFE0E1")
+        isCorrect ? TFColors.paleGreen : TFColors.paleRed
     }
 
     private var titleText: String {

@@ -66,7 +66,7 @@ struct LiveSigningView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(sentenceModel.sentence)
                     .font(.jakarta(size: 17, weight: .medium))
-                    .foregroundColor(Color(hex: "#767676"))
+                    .foregroundColor(TFColors.textGray)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -106,7 +106,7 @@ struct LiveSigningView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
-                            .background(Color(hex: "#97C171"))
+                            .background(TFColors.green)
                             .clipShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -243,7 +243,7 @@ struct LiveSigningView: View {
                 if isCompleted {
                     Image(systemName: "checkmark")
                         .font(.jakarta(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#71A046"))
+                        .foregroundColor(TFColors.deepGreen)
                 } else if isSkipped {
                     Image(systemName: "forward.fill")
                         .font(.jakarta(size: 20, weight: .semibold))
@@ -251,11 +251,11 @@ struct LiveSigningView: View {
                 } else if isCurrent {
                     Image(systemName: "lightbulb.max")
                         .font(.jakarta(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#F8BC3A"))
+                        .foregroundColor(TFColors.gold)
                 } else {
                     Image(systemName: "lock.fill")
                         .font(.jakarta(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                 }
             }
             .frame(width: Self.progressCircleColumnWidth, height: Self.progressCircleColumnWidth, alignment: .center)
@@ -268,7 +268,7 @@ struct LiveSigningView: View {
 
             Text(wordLabel)
                 .font(.jakarta(size: 17, weight: .bold))
-                .foregroundColor(Color(hex: "#767676"))
+                .foregroundColor(TFColors.textGray)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .opacity(isCurrent ? 1 : 0)
@@ -279,9 +279,9 @@ struct LiveSigningView: View {
     }
 
     private func circleFill(isCompleted: Bool, isSkipped: Bool, isCurrent: Bool) -> Color {
-        if isCompleted { return Color(hex: "#EAF3E3") }
+        if isCompleted { return TFColors.paleGreen }
         if isSkipped { return Color.gray.opacity(0.25) }
-        if isCurrent { return Color(hex: "#FDF2D8") }
+        if isCurrent { return TFColors.paleGold }
         return Color.gray.opacity(0.12)
     }
 
@@ -297,7 +297,7 @@ struct LiveSigningView: View {
         } else if index == currentWordIndex {
             return .black
         } else {
-            return Color(hex: "#F0F0F0")
+            return TFColors.borderLight
         }
     }
 
@@ -409,12 +409,12 @@ struct LiveSigningView: View {
 private struct SigningCorrectCheckmarkOverlay: View {
     var body: some View {
         Circle()
-            .fill(Color(hex: "#EAF3E3").opacity(0.95))
+            .fill(TFColors.paleGreen.opacity(0.95))
             .frame(width: 160, height: 160)
             .overlay {
                 Image(systemName: "checkmark")
                     .font(.system(size: 82, weight: .semibold))
-                    .foregroundColor(Color(hex: "#71A046"))
+                    .foregroundColor(TFColors.deepGreen)
             }
             .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 6)
             .allowsHitTesting(false)

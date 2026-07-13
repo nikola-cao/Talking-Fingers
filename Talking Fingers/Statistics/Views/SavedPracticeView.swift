@@ -135,7 +135,7 @@ struct SavedPracticeView: View {
         // and extends into the top safe area.
         .background(alignment: .top) {
             LinearGradient(
-                colors: [Color(hex: "#EEF6FB"), Color(hex: "#DEECF8")],
+                colors: [TFColors.headerGradientTop, TFColors.headerGradientBottom],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -166,7 +166,7 @@ struct SavedPracticeView: View {
     private var headerSection: some View {
         Text("Practice")
             .font(.jakarta(size: 32, weight: .bold))
-            .foregroundColor(Color(hex: "#2A7BBC"))
+            .foregroundColor(TFColors.headerBlue)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 20)
             #if os(macOS)
@@ -178,7 +178,7 @@ struct SavedPracticeView: View {
             #if os(iOS)
             .background(
                 LinearGradient(
-                    colors: [Color(hex: "#EEF6FB"), Color(hex: "#DEECF8")],
+                    colors: [TFColors.headerGradientTop, TFColors.headerGradientBottom],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -201,10 +201,10 @@ struct SavedPracticeView: View {
                 PracticeModeCard(
                     title: "Sign",
                     subtitle: "Sign sentences to someone else",
-                    tint: Color(hex: "#71A046"),
+                    tint: TFColors.deepGreen,
                     backgroundTop: Color(hex: "#F4F9F1"),
-                    backgroundBottom: Color(hex: "#EAF3E3"),
-                    border: Color(hex: "#ADCE8F"),
+                    backgroundBottom: TFColors.paleGreen,
+                    border: TFColors.practiceGreen,
                     imageAssetName: "SentencesSignFlowerPartial",
                     placeholderOnLeading: true
                 ) {
@@ -215,7 +215,7 @@ struct SavedPracticeView: View {
                     title: "Comprehend",
                     subtitle: "Understand sentences signed to you",
                     tint: Color(hex: "#5E9ECC"),
-                    backgroundTop: Color(hex: "#EEF6FB"),
+                    backgroundTop: TFColors.headerGradientTop,
                     backgroundBottom: Color(hex: "#E6F1F9"),
                     border: Color(hex: "#A5C1D8"),
                     imageAssetName: "SentencesComprehendFlowerPartial",
@@ -228,10 +228,10 @@ struct SavedPracticeView: View {
             PracticeModeCard(
                 title: "Sign",
                 subtitle: "Sign sentences to\nsomeone else",
-                tint: Color(hex: "#71A046"),
+                tint: TFColors.deepGreen,
                 backgroundTop: Color(hex: "#F4F9F1"),
-                backgroundBottom: Color(hex: "#EAF3E3"),
-                border: Color(hex: "#ADCE8F"),
+                backgroundBottom: TFColors.paleGreen,
+                border: TFColors.practiceGreen,
                 imageAssetName: "SentencesSignFlowerPartial",
                 placeholderOnLeading: true
             ) {
@@ -242,7 +242,7 @@ struct SavedPracticeView: View {
                 title: "Comprehend",
                 subtitle: "Understand sentences\nsigned to you",
                 tint: Color(hex: "#5E9ECC"),
-                backgroundTop: Color(hex: "#EEF6FB"),
+                backgroundTop: TFColors.headerGradientTop,
                 backgroundBottom: Color(hex: "#E6F1F9"),
                 border: Color(hex: "#A5C1D8"),
                 imageAssetName: "SentencesComprehendFlowerPartial",

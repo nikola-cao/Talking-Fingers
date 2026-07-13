@@ -14,7 +14,7 @@ struct SignHintSheetView: View {
 
     @State private var hintCameraVM = CameraVM()
 
-    private let greenButton = Color(hex: "#97C171")
+    private let greenButton = TFColors.green
 
     /// Resolves bundled GIFs the same way as flashcards / comprehension: `Term` raw values are
     /// uppercase gloss tokens (e.g. `HELLO`, `0`). Callers often pass `Term.rawValue` directly.
@@ -100,20 +100,20 @@ struct SignHintSheetView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "hand.raised.fingers.spread")
                         .font(.jakarta(size: 48))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                     Text("Sign demonstration\nnot available")
                         .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(Color(hex: "#767676"))
+                        .foregroundColor(TFColors.textGray)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(hex: "#F5F5F5"))
+                .background(TFColors.placeholderGray)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color(hex: "#E8E8E8"), lineWidth: 1)
+                .stroke(TFColors.borderGray, lineWidth: 1)
         )
     }
 
@@ -126,21 +126,21 @@ struct SignHintSheetView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "camera.fill")
                         .font(.jakarta(size: 36))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                     Text("Camera not available")
                         .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(Color(hex: "#767676"))
+                        .foregroundColor(TFColors.textGray)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(hex: "#F5F5F5"))
+                .background(TFColors.placeholderGray)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color(hex: "#E8E8E8"), lineWidth: 1)
+                .stroke(TFColors.borderGray, lineWidth: 1)
         )
     }
     #endif
@@ -202,7 +202,7 @@ struct SignHintSheetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Color(hex: "#E8E8E8"), lineWidth: 1)
+                        .stroke(TFColors.borderGray, lineWidth: 1)
                 )
         } else {
             placeholderGifView
@@ -213,15 +213,15 @@ struct SignHintSheetView: View {
         VStack(spacing: 12) {
             Image(systemName: "hand.raised.fingers.spread")
                 .font(.jakarta(size: 48))
-                .foregroundColor(Color(hex: "#B3B3B3"))
+                .foregroundColor(TFColors.lightGray)
             Text("Sign demonstration\nnot available")
                 .font(.jakarta(size: 15, weight: .medium))
-                .foregroundColor(Color(hex: "#767676"))
+                .foregroundColor(TFColors.textGray)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .frame(height: 200)
-        .background(Color(hex: "#F5F5F5"))
+        .background(TFColors.placeholderGray)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
@@ -238,13 +238,13 @@ struct SignHintSheetView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "camera.fill")
                         .font(.jakarta(size: 36))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                     Text("Camera not available")
                         .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(Color(hex: "#767676"))
+                        .foregroundColor(TFColors.textGray)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(hex: "#F5F5F5"))
+                .background(TFColors.placeholderGray)
             }
         }
         .frame(maxWidth: .infinity)
@@ -252,7 +252,7 @@ struct SignHintSheetView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color(hex: "#E8E8E8"), lineWidth: 1)
+                .stroke(TFColors.borderGray, lineWidth: 1)
         )
     }
 }

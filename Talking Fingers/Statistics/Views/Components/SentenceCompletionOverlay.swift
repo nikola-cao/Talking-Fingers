@@ -23,25 +23,25 @@ struct SentenceCompletionOverlay: View {
 
         var textAccent: Color {
             switch self {
-            case .high: return Color(hex: "#71A046")
-            case .medium: return Color(hex: "#ECA509")
+            case .high: return TFColors.deepGreen
+            case .medium: return TFColors.amber
             case .low: return Color(hex: "#EF1013")
             }
         }
 
         var buttonAndGloss: Color {
             switch self {
-            case .high: return Color(hex: "#97C171")
-            case .medium: return Color(hex: "#ECA509")
-            case .low: return Color(hex: "#F46769")
+            case .high: return TFColors.green
+            case .medium: return TFColors.amber
+            case .low: return TFColors.red
             }
         }
 
         var background: Color {
             switch self {
-            case .high: return Color(hex: "#EAF3E3")
+            case .high: return TFColors.paleGreen
             case .medium: return Color(hex: "#FEF7E7")
-            case .low: return Color(hex: "#FFE0E1")
+            case .low: return TFColors.paleRed
             }
         }
 

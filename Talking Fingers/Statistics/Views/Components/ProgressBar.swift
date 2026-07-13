@@ -9,9 +9,9 @@ import SwiftUI
 struct CustomProgressBar: View {
     var progress: Double
     /// Track includes alpha when using 8-digit hex (e.g. `#A9CEEC26`).
-    var trackColor: Color = Color(hex: "#A9CEEC26")
+    var trackColor: Color = TFColors.barTrackBlue
     var trackOpacity: Double = 1.0
-    var fillColor: Color = Color(hex: "#58A0DA")
+    var fillColor: Color = TFColors.blue
     var barHeight: CGFloat = 10
 
     var body: some View {
