@@ -8,35 +8,6 @@
 import SwiftUI
 import SwiftData
 
-enum TFWidgetColors {
-    static let gold = Color(hex: 0xF8BC3A)
-    static let black = Color(hex: 0x000000)
-    static let green = Color(hex: 0x97C171)
-    static let gray = Color(hex: 0xAFAFAF)
-    static let paleGold = Color(hex: 0xFDF2D8)
-    static let paleGreen = Color(hex: 0xEAF3E3)
-    static let white = Color(hex: 0xFFFFFF)
-    static let lightBlue = Color(hex: 0xA9CEEC)
-    static let trackBlue = Color(hex: 0xD9E5EF)
-    static let darkGray = Color(hex: 0x5A5A5A)
-    static let darkerGray = Color(hex: 0x464646)
-    static let blue = Color(hex: 0x58A0DA)
-    static let border = Color(hex: 0xDDDDDD)
-    static let pill = Color(hex: 0xEEEEEE)
-    static let offWhite = Color(hex: 0xF7F7F7)
-    static let iconGray = Color(hex: 0x777777)
-    static let lockGray = Color(hex: 0x8B8B8B)
-    static let badgeLockedBg = Color(hex: 0xEFEFEF)
-    
-    // Chart accents
-    static let chartPlotFill = Color(hex: 0xDBEFFF)
-    static let chartBarStroke = Color(hex: 0x52A0DF)
-    static let practiceGreen = Color(hex: 0xADCE8F)
-    static let textMuted = Color(hex: 0x646464)
-    static let textDark = Color(hex: 0x434343)
-    static let controlGray = Color(hex: 0x646464)
-}
-
 #if os(iOS)
 struct ProfileWidgetsView: View {
     enum PresentationStyle {
@@ -64,7 +35,7 @@ struct ProfileWidgetsView: View {
     
     var body: some View {
         ZStack {
-            TFWidgetColors.white.ignoresSafeArea()
+            TFColors.white.ignoresSafeArea()
             
             VStack(spacing: 0) {
                 switch mode {
@@ -79,7 +50,7 @@ struct ProfileWidgetsView: View {
                     actionRow
                     
                     Rectangle()
-                        .fill(TFWidgetColors.border)
+                        .fill(TFColors.border)
                         .frame(height: 1)
                         .padding(.horizontal, 16)
                     
@@ -135,7 +106,7 @@ struct ProfileWidgetsView: View {
                         .onTapGesture { withAnimation(.easeInOut(duration: 0.2)) { showProfile = false } }
                     profileSheet(onClose: { withAnimation(.easeInOut(duration: 0.2)) { showProfile = false } })
                         .environment(authVM)
-                        .background(TFWidgetColors.white)
+                        .background(TFColors.white)
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         .shadow(color: Color.black.opacity(0.2), radius: 16, x: 0, y: 8)
                         .transition(.scale.combined(with: .opacity))
@@ -154,7 +125,7 @@ struct ProfileWidgetsView: View {
             Button {showProfile.toggle()} label : {
                 Image(systemName: "person.circle")
                     .font(.system(size: 26, weight: .regular))
-                    .foregroundStyle(TFWidgetColors.black)
+                    .foregroundStyle(TFColors.black)
             }
         }
         .padding(.horizontal, 16)
@@ -172,9 +143,9 @@ struct ProfileWidgetsView: View {
                     Button(action: { onClose() }) {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(TFWidgetColors.black)
+                            .foregroundStyle(TFColors.black)
                             .padding(8)
-                            .background(TFWidgetColors.pill)
+                            .background(TFColors.pill)
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -185,12 +156,12 @@ struct ProfileWidgetsView: View {
                 VStack(spacing: 12) {
                     Text(authVM.currentUser?.name ?? "Loading...")
                         .font(.system(size: 16, weight: .regular))
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
 
                     Button(action: { authVM.signOut(); onClose() }) {
                         Text("Log Out")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(TFWidgetColors.white)
+                            .foregroundStyle(TFColors.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                             .background(Color.red)
@@ -213,10 +184,10 @@ struct ProfileWidgetsView: View {
                     Text("Add Widgets")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.pill)
+                        .background(TFColors.pill)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -225,10 +196,10 @@ struct ProfileWidgetsView: View {
                     Text("Done")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.pill)
+                        .background(TFColors.pill)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -237,17 +208,17 @@ struct ProfileWidgetsView: View {
                     Text("Edit Widgets")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.pill)
+                        .background(TFColors.pill)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
                 Spacer()
                 Text(formattedToday)
                     .font(.subheadline)
-                    .foregroundStyle(TFWidgetColors.darkerGray)
+                    .foregroundStyle(TFColors.darkerGray)
             }
         }
         .padding(.horizontal, 16)
@@ -384,20 +355,20 @@ struct WidgetCardView: View {
                     HStack {
                         Text(widgetTitle)
                             .font(.headline)
-                            .foregroundStyle(TFWidgetColors.black)
+                            .foregroundStyle(TFColors.black)
                         Spacer()
                         if widget.type == .dailyChallenge {
                             DailyChallengeHeaderTrailing()
                         } else if showsAccessory {
                             Image(systemName: accessoryIcon)
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(widget.type == .masteryBadges ? TFWidgetColors.gray : TFWidgetColors.iconGray)
+                                .foregroundStyle(widget.type == .masteryBadges ? TFColors.gray : TFColors.iconGray)
                                 .padding(7)
-                                .background(widget.type == .masteryBadges ? TFWidgetColors.white : TFWidgetColors.pill)
+                                .background(widget.type == .masteryBadges ? TFColors.white : TFColors.pill)
                                 .clipShape(Circle())
                                 .overlay(
                                     Circle()
-                                        .stroke(TFWidgetColors.border, lineWidth: 1)
+                                        .stroke(TFColors.border, lineWidth: 1)
                                 )
                         }
                     }
@@ -422,11 +393,11 @@ struct WidgetCardView: View {
                 }
             }
             .padding(widgetTitle.isEmpty ? 14 : 16)
-            .background(TFWidgetColors.white)
+            .background(TFColors.white)
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(TFWidgetColors.border, lineWidth: 1)
+                    .stroke(TFColors.border, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
             
@@ -435,7 +406,7 @@ struct WidgetCardView: View {
                 Button(action: onRemove) {
                     ZStack {
                         Circle()
-                            .fill(TFWidgetColors.controlGray)
+                            .fill(TFColors.controlGray)
                             .frame(width: 24, height: 24)
                         Image(systemName: "minus")
                             .font(.caption)
@@ -525,10 +496,10 @@ private struct DailyChallengeHeaderTrailing: View {
         HStack(spacing: 6) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(TFWidgetColors.gold)
+                .foregroundStyle(TFColors.gold)
             Text(streakLabel)
                 .font(.subheadline)
-                .foregroundStyle(TFWidgetColors.black)
+                .foregroundStyle(TFColors.black)
         }
     }
 }
@@ -554,7 +525,7 @@ struct AddWidgetsScreen: View {
                 .padding(.vertical, 14)
             }
         }
-        .background(TFWidgetColors.white.ignoresSafeArea())
+        .background(TFColors.white.ignoresSafeArea())
     }
     
     private var header: some View {
@@ -563,7 +534,7 @@ struct AddWidgetsScreen: View {
                 Button(action: onBack) {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .padding(.vertical, 8)
                         .padding(.horizontal, 8)
                 }
@@ -573,10 +544,10 @@ struct AddWidgetsScreen: View {
                     Text("Done")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.pill)
+                        .background(TFColors.pill)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -584,12 +555,12 @@ struct AddWidgetsScreen: View {
             
             Text("Add Widgets")
                 .font(.headline)
-                .foregroundStyle(TFWidgetColors.black)
+                .foregroundStyle(TFColors.black)
         }
         .padding(.horizontal, 16)
         .padding(.top, 12)
         .padding(.bottom, 6)
-        .background(TFWidgetColors.white)
+        .background(TFColors.white)
     }
 }
 
@@ -604,14 +575,14 @@ struct StreakWidgetContent: View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(TFWidgetColors.gold)
+                .foregroundStyle(TFColors.gold)
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(streakCount)")
                     .font(.system(size: 28, weight: .bold))
                     .fontWeight(.bold)
                 Text(streakCount == 1 ? "day in a row" : "days in a row")
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(TFWidgetColors.darkerGray)
+                    .foregroundStyle(TFColors.darkerGray)
             }
             Spacer(minLength: 0)
         }
@@ -626,14 +597,14 @@ struct WordsLearnedWidgetContent: View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "book.fill")
                 .font(.system(size: 24, weight: .semibold))
-                .foregroundStyle(TFWidgetColors.gold)
+                .foregroundStyle(TFColors.gold)
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(dataVM.wordsLearnedCount())")
                     .font(.system(size: 28, weight: .bold))
                     .fontWeight(.bold)
                 Text("words learned")
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(TFWidgetColors.darkerGray)
+                    .foregroundStyle(TFColors.darkerGray)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
                     .fixedSize(horizontal: false, vertical: true)
@@ -656,11 +627,11 @@ struct RecentProgressWidgetContent: View {
             HStack(spacing: 8) {
                 Image(systemName: "medal")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.lightBlue)
+                    .foregroundStyle(TFColors.lightBlue)
                 Text("Overall Mastery")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundStyle(TFWidgetColors.textMuted)
+                    .foregroundStyle(TFColors.textMuted)
                 Spacer()
             }
             
@@ -673,9 +644,9 @@ struct RecentProgressWidgetContent: View {
                     
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(TFWidgetColors.trackBlue)
+                            .fill(TFColors.trackBlue)
                         Capsule()
-                            .fill(TFWidgetColors.blue)
+                            .fill(TFColors.blue)
                             .frame(width: fillW)
                     }
                     .frame(height: h)
@@ -684,7 +655,7 @@ struct RecentProgressWidgetContent: View {
                 
                 Text("\(masteryPercentage)%")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.black)
+                    .foregroundStyle(TFColors.black)
                     .frame(width: 44, alignment: .trailing)
             }
         }
@@ -704,19 +675,19 @@ struct DailyChallengeWidgetContent: View {
                     VStack(spacing: 6) {
                         ZStack {
                             Circle()
-                                .fill(practiced ? TFWidgetColors.paleGreen : TFWidgetColors.badgeLockedBg)
+                                .fill(practiced ? TFColors.paleGreen : TFColors.badgeLockedBg)
                                 .overlay(
                                     Circle()
-                                        .stroke(practiced ? TFWidgetColors.green : TFWidgetColors.gray, lineWidth: 1.2)
+                                        .stroke(practiced ? TFColors.green : TFColors.gray, lineWidth: 1.2)
                                 )
                                 .frame(width: 34, height: 34)
                             Image(systemName: "trophy.fill")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(practiced ? TFWidgetColors.green : TFWidgetColors.gray)
+                                .foregroundStyle(practiced ? TFColors.green : TFColors.gray)
                         }
                         Text(day)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(TFWidgetColors.darkerGray)
+                            .foregroundStyle(TFColors.darkerGray)
                     }
                 }
             }
@@ -764,20 +735,20 @@ struct MasteryBadgeItem: View {
         VStack(spacing: 6) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isLocked ? TFWidgetColors.badgeLockedBg : TFWidgetColors.paleGold)
+                    .fill(isLocked ? TFColors.badgeLockedBg : TFColors.paleGold)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .stroke(isLocked ? TFWidgetColors.gray : TFWidgetColors.gold, lineWidth: 1)
+                            .stroke(isLocked ? TFColors.gray : TFColors.gold, lineWidth: 1)
                     )
                     .frame(width: side, height: side)
                 
                 Image(systemName: isLocked ? "lock.fill" : "trophy")
                     .font(.system(size: min(22, side * 0.42), weight: .semibold))
-                    .foregroundStyle(isLocked ? TFWidgetColors.textDark : TFWidgetColors.gold)
+                    .foregroundStyle(isLocked ? TFColors.textDark : TFColors.gold)
             }
             Text("Name")
                 .font(.system(size: 12, weight: .regular))
-                .foregroundStyle(TFWidgetColors.textMuted)
+                .foregroundStyle(TFColors.textMuted)
                 .frame(maxWidth: .infinity)
                 .multilineTextAlignment(.center)
         }
@@ -815,15 +786,15 @@ struct AccuracyWidgetContent: View {
             HStack(alignment: .center) {
                 Text("Review Again?")
                     .font(.subheadline)
-                    .foregroundStyle(TFWidgetColors.black)
+                    .foregroundStyle(TFColors.black)
                 Spacer()
                 Button(action: {}) {
                     Text("Practice")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(TFWidgetColors.white)
+                        .foregroundStyle(TFColors.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.practiceGreen)
+                        .background(TFColors.practiceGreen)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -840,7 +811,7 @@ struct AccuracyRow: View {
         HStack(alignment: .center, spacing: 10) {
             Text(label)
                 .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(TFWidgetColors.textDark)
+                .foregroundStyle(TFColors.textDark)
                 .frame(width: 92, alignment: .leading)
             
             GeometryReader { proxy in
@@ -850,22 +821,22 @@ struct AccuracyRow: View {
                 
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(TFWidgetColors.chartPlotFill)
+                        .fill(TFColors.chartPlotFill)
                     Capsule()
-                        .fill(TFWidgetColors.blue)
+                        .fill(TFColors.blue)
                         .frame(width: fillW)
                 }
                 .frame(height: h)
                 .overlay(
                     Capsule()
-                        .stroke(TFWidgetColors.chartBarStroke.opacity(0.35), lineWidth: 1)
+                        .stroke(TFColors.chartBarStroke.opacity(0.35), lineWidth: 1)
                 )
             }
             .frame(height: 10)
             
             Text("\(percentage)%")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(TFWidgetColors.textMuted)
+                .foregroundStyle(TFColors.textMuted)
                 .frame(width: 44, alignment: .trailing)
         }
     }
@@ -885,12 +856,12 @@ private struct WeeklyActivityChartView: View {
             VStack(alignment: .trailing, spacing: 0) {
                 Text("time")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.textMuted)
+                    .foregroundStyle(TFColors.textMuted)
                     .rotationEffect(.degrees(-90))
                     .fixedSize()
                 Text("(attempts)")
                     .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.textMuted)
+                    .foregroundStyle(TFColors.textMuted)
                     .rotationEffect(.degrees(-90))
                     .fixedSize()
                     .padding(.top, 2)
@@ -900,10 +871,10 @@ private struct WeeklyActivityChartView: View {
             VStack(alignment: .leading, spacing: 10) {
                 ZStack(alignment: .topLeading) {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(TFWidgetColors.chartPlotFill.opacity(0.55))
+                        .fill(TFColors.chartPlotFill.opacity(0.55))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .stroke(TFWidgetColors.border, lineWidth: 1)
+                                .stroke(TFColors.border, lineWidth: 1)
                         )
                     
                     HStack(alignment: .top, spacing: 0) {
@@ -911,7 +882,7 @@ private struct WeeklyActivityChartView: View {
                             ForEach(yTicks, id: \.self) { tick in
                                 Text("\(tick)")
                                     .font(.system(size: 11, weight: .medium))
-                                    .foregroundStyle(TFWidgetColors.textMuted)
+                                    .foregroundStyle(TFColors.textMuted)
                                     .frame(height: chartInnerHeight / CGFloat(yTicks.count - 1), alignment: .top)
                             }
                         }
@@ -922,7 +893,7 @@ private struct WeeklyActivityChartView: View {
                         VStack(spacing: 0) {
                             ForEach(0..<(yTicks.count - 1), id: \.self) { _ in
                                 Rectangle()
-                                    .fill(TFWidgetColors.gray.opacity(0.25))
+                                    .fill(TFColors.gray.opacity(0.25))
                                     .frame(height: 1)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .padding(.leading, 6)
@@ -942,10 +913,10 @@ private struct WeeklyActivityChartView: View {
                                 Spacer(minLength: 0)
                                 
                                 RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .fill(TFWidgetColors.lightBlue)
+                                    .fill(TFColors.lightBlue)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                            .stroke(TFWidgetColors.chartBarStroke, lineWidth: 1)
+                                            .stroke(TFColors.chartBarStroke, lineWidth: 1)
                                     )
                                     .frame(height: barH)
                             }
@@ -963,7 +934,7 @@ private struct WeeklyActivityChartView: View {
                     ForEach(days.indices, id: \.self) { index in
                         Text(days[index])
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(TFWidgetColors.textMuted)
+                            .foregroundStyle(TFColors.textMuted)
                             .frame(maxWidth: .infinity)
                     }
                 }
@@ -1017,17 +988,17 @@ struct AddWidgetCardView: View {
                 HStack {
                     Text(type.rawValue)
                         .font(.headline)
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(TFWidgetColors.gray)
+                        .foregroundStyle(TFColors.gray)
                         .padding(7)
-                        .background(TFWidgetColors.white)
+                        .background(TFColors.white)
                         .clipShape(Circle())
                         .overlay(
                             Circle()
-                                .stroke(TFWidgetColors.border, lineWidth: 1)
+                                .stroke(TFColors.border, lineWidth: 1)
                         )
                 }
                 
@@ -1042,11 +1013,11 @@ struct AddWidgetCardView: View {
                 }
             }
             .padding()
-            .background(TFWidgetColors.white)
+            .background(TFColors.white)
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(TFWidgetColors.border, lineWidth: 1)
+                    .stroke(TFColors.border, lineWidth: 1)
             )
             .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
             
@@ -1054,7 +1025,7 @@ struct AddWidgetCardView: View {
             Button(action: onAdd) {
                 ZStack {
                     Circle()
-                        .fill(TFWidgetColors.controlGray)
+                        .fill(TFColors.controlGray)
                         .frame(width: 32, height: 32)
                     Image(systemName: "plus")
                         .font(.caption)
@@ -1084,15 +1055,15 @@ struct AccuracyPreview: View {
             HStack(alignment: .center) {
                 Text("Review Again?")
                     .font(.subheadline)
-                    .foregroundStyle(TFWidgetColors.black)
+                    .foregroundStyle(TFColors.black)
                 Spacer()
                 Button(action: {}) {
                     Text("Practice")
                         .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(TFWidgetColors.white)
+                        .foregroundStyle(TFColors.white)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(TFWidgetColors.practiceGreen)
+                        .background(TFColors.practiceGreen)
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)

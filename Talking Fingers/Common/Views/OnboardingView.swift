@@ -8,7 +8,6 @@
 import Foundation
 import SwiftUI
 #if os(iOS)
-import UIKit
 struct OnboardingView: View {
     @Environment(AuthenticationViewModel.self) var authVM
     @State private var page = 0
@@ -61,15 +60,15 @@ struct ObView1: View {
         ZStack {
             Rectangle()
                 .ignoresSafeArea()
-                .foregroundColor(Color(UIColor(hex: "#EAF3E3")))
+                .foregroundColor(Color(hex: "#EAF3E3"))
             
-            RadialGradient(colors: [Color(UIColor(hex: "#82C8FF")), Color(UIColor(hex: "#ADCE8F"))], center: .center, startRadius: 0, endRadius: 250)
+            RadialGradient(colors: [Color(hex: "#82C8FF"), Color(hex: "#ADCE8F")], center: .center, startRadius: 0, endRadius: 250)
                 .frame(width: 500, height: 500)
                 .clipShape(Circle())
                 .blur(radius: 200)
                 .offset(x:-160, y: -400)
             
-            RadialGradient(colors: [Color(UIColor(hex: "#F8BC3A")), Color(UIColor(hex: "#ADCE8F"))], center: .center, startRadius: 0, endRadius: 250)
+            RadialGradient(colors: [Color(hex: "#F8BC3A"), Color(hex: "#ADCE8F")], center: .center, startRadius: 0, endRadius: 250)
                 .frame(width: 500, height: 500)
                 .clipShape(Circle())
                 .blur(radius: 200)
@@ -78,17 +77,17 @@ struct ObView1: View {
             VStack (alignment: .leading) {
                 Text("Welcome to")
                     .font(.jakarta(size: 40, weight: .regular))
-                    .foregroundColor(Color(UIColor(hex: "#464646")))
+                    .foregroundColor(Color(hex: "#464646"))
                 Text("Talking Fingers")
                     .font(.jakarta(size: 48, weight: .bold))
-                    .foregroundColor(Color(UIColor(hex: "#464646")))
+                    .foregroundColor(Color(hex: "#464646"))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .frame(alignment: .leading)
                 Button (action: {onNext()}){
                     ZStack {
                         RoundedRectangle(cornerRadius: 100)
-                            .foregroundColor(Color(UIColor(hex: "#97C171")))
+                            .foregroundColor(Color(hex: "#97C171"))
                             .frame(maxWidth: .infinity)
                             .frame(height: 45)
                         Text("Get Started")
@@ -119,10 +118,10 @@ struct ObView2: View {
                 VStack (alignment: .leading) {
                     Text("Welcome to")
                         .font(.jakarta(size: 40, weight: .regular))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                     Text("Talking Fingers")
                         .font(.jakarta(size: 48, weight: .bold))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                         .frame(alignment: .leading)
@@ -138,7 +137,7 @@ struct ObView2: View {
                 VStack (alignment: .leading) {
                     Text ("Let's set you up.")
                         .font(.jakarta(size: 20, weight: .bold))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                         .padding(.bottom)
                     TextField("Your Name", text: $name)
                         .font(.jakarta(size: 17))
@@ -148,16 +147,16 @@ struct ObView2: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 56)
                         .background(Color.gray.opacity(0.1))
-                        .border(Color(UIColor(hex: "#E2E2E2")))
+                        .border(Color(hex: "#E2E2E2"))
                         .cornerRadius(12)
                         .padding(.bottom)
                     Text("In American Sign Language (ASL), dominant hand determines how you sign. ")
                         .font(.jakarta(size: 20, weight: .regular))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                     +
                     Text("Select your dominant hand.")
                         .font(.jakarta(size: 20, weight: .bold))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                     HStack(spacing: 8) {
                         Button {
                             selectedHand = .left
@@ -166,16 +165,16 @@ struct ObView2: View {
                                 RoundedRectangle(cornerRadius: 24)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 181)
-                                    .foregroundColor(selectedHand == .left ? Color(UIColor(hex: "#FDF2D8")): Color(UIColor(hex: "#FCFCFC")))
+                                    .foregroundColor(selectedHand == .left ? Color(hex: "#FDF2D8"): Color(hex: "#FCFCFC"))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 24)
-                                            .stroke(Color(UIColor(hex: "#E2E2E2")), lineWidth: 1)
+                                            .stroke(Color(hex: "#E2E2E2"), lineWidth: 1)
                                     )
                                 VStack {
                                     Image("left")
                                     Text("Left")
                                         .font(.jakarta(size: 20, weight: .regular))
-                                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                                        .foregroundColor(Color(hex: "#464646"))
                                 }
                             }
                         }
@@ -187,16 +186,16 @@ struct ObView2: View {
                                 RoundedRectangle(cornerRadius: 24)
                                     .frame(maxWidth: .infinity)
                                     .frame(height: 181)
-                                    .foregroundColor(selectedHand == .right ? Color(UIColor(hex: "#FDF2D8")): Color(UIColor(hex: "#FCFCFC")))
+                                    .foregroundColor(selectedHand == .right ? Color(hex: "#FDF2D8"): Color(hex: "#FCFCFC"))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 24)
-                                            .stroke(Color(UIColor(hex: "#E2E2E2")), lineWidth: 1)
+                                            .stroke(Color(hex: "#E2E2E2"), lineWidth: 1)
                                     )
                                 VStack {
                                     Image("right")
                                     Text("Right")
                                         .font(.jakarta(size: 20, weight: .regular))
-                                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                                        .foregroundColor(Color(hex: "#464646"))
                                 }
                             }
                         }
@@ -214,7 +213,7 @@ struct ObView2: View {
                     }){
                         ZStack {
                             RoundedRectangle(cornerRadius: 100)
-                                .foregroundColor(Color(UIColor(hex: "#97C171")))
+                                .foregroundColor(Color(hex: "#97C171"))
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 45)
                             Text("Start Learning")
@@ -275,18 +274,18 @@ struct ObView3: View {
                 VStack (alignment: .leading){
                     Text("Nice to meet you,")
                         .font(.jakarta(size: 40, weight: .regular))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                     Text("\(name)!")
                         .font(.jakarta(size: 48, weight: .bold))
-                        .foregroundColor(Color(UIColor(hex: "#559AD2")))
+                        .foregroundColor(Color(hex: "#559AD2"))
                         .padding(.bottom)
                     Text("Learning to fingerspell is essential for your ASL journey. ")
                         .font(.jakarta(size: 20, weight: .regular))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                     +
                     Text("Let’s start with your name!")
                         .font(.jakarta(size: 20, weight: .bold))
-                        .foregroundColor(Color(UIColor(hex: "#464646")))
+                        .foregroundColor(Color(hex: "#464646"))
                 }
                 .frame(maxWidth: 338, alignment: .leading)
                 .padding(.bottom)
@@ -308,12 +307,12 @@ struct ObView3: View {
                                 .frame(width: 54, height: 72)
                             Text(letter.uppercased())
                                 .font(.jakarta(size: 32, weight: .bold))
-                                .foregroundColor(Color(UIColor(hex: "#464646")))
+                                .foregroundColor(Color(hex: "#464646"))
                             VStack {
                                 Text(signDescription(for: letter))
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .font(.jakarta(size: 16, weight: .regular))
-                                    .foregroundColor(Color(UIColor(hex: "#464646")))
+                                    .foregroundColor(Color(hex: "#464646"))
                                     .multilineTextAlignment(.leading)
                                     .lineLimit(nil)
                             }
@@ -327,7 +326,7 @@ struct ObView3: View {
                 Button (action: {onNext()}){
                     ZStack {
                         RoundedRectangle(cornerRadius: 100)
-                            .foregroundColor(Color(UIColor(hex: "#97C171")))
+                            .foregroundColor(Color(hex: "#97C171"))
                             .frame(maxWidth: .infinity)
                             .frame(height: 45)
                         Text("Try It Out")
@@ -342,26 +341,6 @@ struct ObView3: View {
     }
     func signDescription(for letter: Character) -> String {
         return signDescriptions[letter] ?? "No description available"
-    }
-}
-
-extension UIColor {
-    convenience init(hex: String) {
-        let hex = hex.trimmingCharacters(in: .whitespacesAndNewlines)
-        let scanner = Scanner(string: hex)
-
-        if hex.hasPrefix("#") {
-            scanner.currentIndex = hex.index(after: hex.startIndex)
-        }
-
-        var rgb: UInt64 = 0
-        scanner.scanHexInt64(&rgb)
-
-        let r = CGFloat((rgb >> 16) & 0xFF) / 255.0
-        let g = CGFloat((rgb >> 8) & 0xFF) / 255.0
-        let b = CGFloat(rgb & 0xFF) / 255.0
-
-        self.init(red: r, green: g, blue: b, alpha: 1.0)
     }
 }
 
@@ -382,18 +361,18 @@ struct ObView4: View {
             VStack(alignment: .leading) {
                 Text("Try fingerspelling your name!")
                     .font(.jakarta(size: 17, weight: .regular))
-                    .foregroundColor(Color(UIColor(hex: "#464646")))
+                    .foregroundColor(Color(hex: "#464646"))
             }
             HStack(spacing: 8) {
                 ForEach(letters.indices, id: \.self) { i in
                     Text(String(letters[i]))
                         .font(.jakarta(size: 32, weight: .semibold))
-                        .foregroundColor(i == currentIndex ? Color(UIColor(hex: "#464646")) : Color(UIColor(hex: "#CCCCCC")))
+                        .foregroundColor(i == currentIndex ? Color(hex: "#464646") : Color(hex: "#CCCCCC"))
 
                     if i != letters.count - 1 {
                         Text("-")
                             .font(.jakarta(size: 32, weight: .semibold))
-                            .foregroundColor(Color(UIColor(hex: "#CCCCCC")))
+                            .foregroundColor(Color(hex: "#CCCCCC"))
                     }
                 }
             }
@@ -438,7 +417,7 @@ struct ObView4: View {
                 }) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 100)
-                            .foregroundColor(Color(UIColor(hex: "#97C171")))
+                            .foregroundColor(Color(hex: "#97C171"))
                             .frame(maxWidth: .infinity)
                             .frame(height: 45)
                         Text("Next")

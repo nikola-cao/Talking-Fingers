@@ -33,7 +33,7 @@ struct MacProfileView: View {
             VStack(alignment: .leading, spacing: 0) {
                 bannerSection
                 Rectangle()
-                    .fill(TFWidgetColors.border)
+                    .fill(TFColors.border)
                     .frame(height: 1)
                     .padding(.horizontal, 32)
 
@@ -80,10 +80,10 @@ struct MacProfileView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(displayName)
                         .font(.jakarta(size: 30, weight: .bold))
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                     Text(identitySubtitle)
                         .font(.jakarta(size: 14, weight: .regular))
-                        .foregroundStyle(TFWidgetColors.textMuted)
+                        .foregroundStyle(TFColors.textMuted)
                 }
                 .padding(.top, 118)
 
@@ -95,12 +95,12 @@ struct MacProfileView: View {
             Button(action: { showingSettings.toggle() }) {
                 Image(systemName: "gearshape")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.darkerGray)
+                    .foregroundStyle(TFColors.darkerGray)
                     .padding(6)
-                    .background(TFWidgetColors.pill)
+                    .background(TFColors.pill)
                     .clipShape(Circle())
                     .overlay(
-                        Circle().stroke(TFWidgetColors.border, lineWidth: 1)
+                        Circle().stroke(TFColors.border, lineWidth: 1)
                     )
             }
             .buttonStyle(.plain)
@@ -110,12 +110,12 @@ struct MacProfileView: View {
                 VStack(spacing: 12) {
                     Text(authVM.currentUser?.name ?? "")
                         .font(.jakarta(size: 14, weight: .regular))
-                        .foregroundStyle(TFWidgetColors.black)
+                        .foregroundStyle(TFColors.black)
                         .lineLimit(1)
                     Button(action: { authVM.signOut(); showingSettings = false }) {
                         Text("Log Out")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(TFWidgetColors.white)
+                            .foregroundStyle(TFColors.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 10)
                             .background(Color.red)
@@ -248,7 +248,7 @@ struct MacProfileView: View {
                 Spacer()
                 Text(formattedToday)
                     .font(.jakarta(size: 14, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.textDark)
+                    .foregroundStyle(TFColors.textDark)
             }
         }
     }
@@ -257,13 +257,13 @@ struct MacProfileView: View {
         Button(action: action) {
             Text(title)
                 .font(.jakarta(size: 13, weight: .semibold))
-                .foregroundStyle(TFWidgetColors.black)
+                .foregroundStyle(TFColors.black)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
-                .background(TFWidgetColors.pill)
+                .background(TFColors.pill)
                 .clipShape(Capsule())
                 .overlay(
-                    Capsule().stroke(TFWidgetColors.border, lineWidth: 1)
+                    Capsule().stroke(TFColors.border, lineWidth: 1)
                 )
         }
         .buttonStyle(.plain)
@@ -323,7 +323,7 @@ struct MacProfileView: View {
                 .frame(maxWidth: .infinity, alignment: .top)
 
             Rectangle()
-                .fill(TFWidgetColors.border)
+                .fill(TFColors.border)
                 .frame(width: 1)
                 .frame(minHeight: 240)
 
@@ -376,12 +376,12 @@ struct MacProfileView: View {
     private func columnDropZone(target: WidgetColumn) -> some View {
         RoundedRectangle(cornerRadius: 14, style: .continuous)
             .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [6]))
-            .foregroundStyle(TFWidgetColors.border)
+            .foregroundStyle(TFColors.border)
             .frame(height: 44)
             .overlay(
                 Text("Drop here")
                     .font(.jakarta(size: 12, weight: .semibold))
-                    .foregroundStyle(TFWidgetColors.textMuted)
+                    .foregroundStyle(TFColors.textMuted)
             )
             .opacity(draggingWidgetID == nil ? 0.0 : 0.8)
             .animation(.easeInOut(duration: 0.15), value: draggingWidgetID)
@@ -574,9 +574,9 @@ struct MacAddWidgetsSheet: View {
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(TFWidgetColors.darkerGray)
+                        .foregroundStyle(TFColors.darkerGray)
                         .padding(6)
-                        .background(TFWidgetColors.pill)
+                        .background(TFColors.pill)
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -586,7 +586,7 @@ struct MacAddWidgetsSheet: View {
             .padding(.bottom, 12)
 
             Rectangle()
-                .fill(TFWidgetColors.border)
+                .fill(TFColors.border)
                 .frame(height: 1)
 
             ScrollView {
@@ -594,7 +594,7 @@ struct MacAddWidgetsSheet: View {
                     if vm.availableWidgets.isEmpty {
                         Text("All widgets already added")
                             .font(.jakarta(size: 14, weight: .regular))
-                            .foregroundStyle(TFWidgetColors.textMuted)
+                            .foregroundStyle(TFColors.textMuted)
                             .padding(.vertical, 40)
                     } else {
                         ForEach(vm.availableWidgets, id: \.self) { type in

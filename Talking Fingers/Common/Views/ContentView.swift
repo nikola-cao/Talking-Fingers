@@ -153,7 +153,7 @@ private struct MainFloatingTabBar: View {
             }
             .foregroundColor(
                 isSelected
-                ? Color(red: 0.30, green: 0.55, blue: 0.85)
+                ? TFColors.tabBlue
                 : Color.gray.opacity(0.6)
             )
             .padding(.horizontal, 16)
@@ -162,7 +162,7 @@ private struct MainFloatingTabBar: View {
                 Capsule()
                     .fill(
                         isSelected
-                        ? Color(red: 0.30, green: 0.55, blue: 0.85).opacity(0.15)
+                        ? TFColors.tabBlue.opacity(0.15)
                         : Color.clear
                     )
             )
