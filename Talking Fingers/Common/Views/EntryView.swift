@@ -52,7 +52,6 @@ struct EntryView: View {
                 }
                 if (isLogin) {
                     Login()
-                        .environment(authVM)
                 } else {
                     Register(onSuccess: { email, password in
                         // After successful register, present onboarding first
@@ -60,7 +59,6 @@ struct EntryView: View {
                         pendingPassword = password
                         pushOnboarding = true
                     })
-                        .environment(authVM)
                 }
             }
             .background(
@@ -77,7 +75,6 @@ struct EntryView: View {
                             }
                         }
                     })
-                    .environment(authVM)
                 } label: {
                     EmptyView()
                 }

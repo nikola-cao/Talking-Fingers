@@ -5,14 +5,11 @@
 //  Created by Nikola Cao on 1/24/26.
 //
 import SwiftUI
-import SwiftData
 struct ContentView: View {
     @Environment(AuthenticationViewModel.self) var authVM
     @Environment(SwiftDataVM.self) private var dataVM
     @Environment(\.scenePhase) private var scenePhase
-    
-    @Query private var users: [User]
-    
+
     var body: some View {
         Group {
             if authVM.isInitializingSession {
@@ -24,7 +21,6 @@ struct ContentView: View {
                 EntryView()
             }
         }
-        .environment(authVM)
         .onAppear {
             if let user = authVM.currentUser {
                 Task { await dataVM.syncAuthenticatedUser(user) }
@@ -35,9 +31,10 @@ struct ContentView: View {
             Task { await dataVM.syncAuthenticatedUser(user) }
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
-            if newPhase == .active, let currentUser = users.first {
-                dataVM.checkAndResetStreak(for: currentUser)
-                print("Streak checked for user: \(currentUser.name)")
+            if newPhase == .active,
+               let userId = authVM.currentUser?.userId,
+               let localUser = dataVM.localUser(matching: userId) {
+                dataVM.checkAndResetStreak(for: localUser)
             }
         }
     }
@@ -59,7 +56,6 @@ struct MainNavigationView: View {
             )
 
             detailView(for: selectedSection)
-                .environment(authVM)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,7 +69,6 @@ struct MainNavigationView: View {
 
             MainFloatingTabBar(selectedSection: $selectedSection)
         }
-        .environment(authVM)
         .background(Color.white.ignoresSafeArea())
         .ignoresSafeArea(.keyboard, edges: .bottom)
         #endif
@@ -84,21 +79,16 @@ struct MainNavigationView: View {
         switch section {
         case .home:
             DashboardView()
-                .environment(authVM)
         case .stats:
             StatsView()
-            
         case .camera:
             NavigationStack {
                 CameraView()
-                    .environment(authVM)
             }
         case .review:
             NavigationStack {
                 ReviewView()
-                    .environment(authVM)
             }
-            
         case .practice:
             NavigationStack {
                 SavedPracticeView()
