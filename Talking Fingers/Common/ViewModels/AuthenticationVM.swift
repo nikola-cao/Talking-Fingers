@@ -59,6 +59,7 @@ class AuthenticationViewModel {
     
     func login(email: String, password: String) async {
         isLoading = true
+        errorMessage = nil
         do {
             let authResult = try await auth.signIn(withEmail: email, password: password)
             await loadCurrentUserProfile(for: authResult.user, fallbackEmail: email, isLoggingIn: true)
