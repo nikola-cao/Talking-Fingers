@@ -33,12 +33,7 @@ struct GenerateSentencesView: View {
     }
 
     private var availableCategories: [TermCategory] {
-        TermCategory.allCases.filter { category in
-            category != .commonDescriptors
-            && category != .dateTime
-            && category != .commonObjects
-            && category != .feelingsEmotions
-        }
+        SentenceGenerationService.allowedCategories
     }
 
     private var effectiveCategories: Set<TermCategory> {
@@ -141,12 +136,6 @@ struct GenerateSentencesView: View {
         }
     }
     
-    private var selectedGlossTerms: [Term] {
-        let terms = effectiveCategories.flatMap { Term.words(for: $0) }
-        let unique = Array(Set(terms))
-        return unique.sorted { $0.rawValue < $1.rawValue }
-    }
-    
     private func toggleCategory(_ category: TermCategory) {
         withAnimation(.easeInOut(duration: 0.2)) {
             if selectedCategories.contains(category) {
@@ -161,10 +150,13 @@ struct GenerateSentencesView: View {
         Task {
             isGenerating = true
             errorMessage = nil
-            
+
             do {
-                let sentences = try await generateSentencesForCategories(effectiveCategories, modeSelection: modeSelection)
-                
+                let sentences = try await SentenceGenerationService.generateSentences(
+                    categories: effectiveCategories,
+                    modeSelection: modeSelection
+                )
+
                 await MainActor.run {
                     onSentencesGenerated(sentences, effectiveCategories, trainingName.trimmingCharacters(in: .whitespacesAndNewlines))
                 }
@@ -175,19 +167,6 @@ struct GenerateSentencesView: View {
                 }
             }
         }
-    }
-
-    /// Generate 5 sentences for the given categories (e.g. for Extend in a session).
-    static func generateSentences(categories: Set<TermCategory>, modeSelection: PracticeModeSelection = PracticeModeSelection(signing: true, comprehension: false)) async throws -> [AISentenceModel] {
-        let allowedCategories = Set(
-            TermCategory.allCases.filter { category in
-                category != .commonDescriptors
-                && category != .dateTime
-                && category != .feelingsEmotions
-            }
-        )
-        let effectiveCategories = categories.isEmpty ? allowedCategories : categories.intersection(allowedCategories)
-        return try await generateSentencesForCategories(effectiveCategories, modeSelection: modeSelection)
     }
 }
 
@@ -215,81 +194,6 @@ struct CategoryButton: View {
                 )
         }
         .buttonStyle(.plain)
-    }
-}
-
-private func generateSentencesForCategories(_ categories: Set<TermCategory>, modeSelection: PracticeModeSelection = PracticeModeSelection(signing: true, comprehension: false)) async throws -> [AISentenceModel] {
-    // 1. Get all terms for the selected categories
-    let focusTerms = categories.flatMap { category in
-        Term.words(for: category)
-    }
-    
-    guard !focusTerms.isEmpty else {
-        throw AIError.invalidRequest
-    }
-    
-    // 2. Determine which terms should drive sentence generation.
-    // If there are any non-alphabet/number terms, prioritize those for sentences.
-    // If the user ONLY picked alphabet and/or numbers, still allow those terms
-    // so we can generate spelling/number-focused practice.
-    let nonAlphaNumericTerms = focusTerms.filter { term in
-        term.category != .alphabet && term.category != .numbers
-    }
-    let sentenceTerms = nonAlphaNumericTerms.isEmpty ? focusTerms : nonAlphaNumericTerms
-    
-    // Create flashcards only for sentence-appropriate terms
-    let flashcards = sentenceTerms.map { term in
-        FlashcardModel(
-            term: term,
-            id: UUID(),
-            category: term.category,
-            gifFileName: nil
-        )
-    }
-    
-    // 3. Call AI generation with focus terms using the shared instance
-    let aiViewModel = AIViewModel.shared
-    
-    // Wait for API key to be available (handles cold starts properly)
-    try await aiViewModel.waitForAPIKey()
-    
-    let sentences = try await aiViewModel.generateAISentences(
-        from: flashcards,
-        focusTerms: sentenceTerms
-    )
-
-    // 4. Assign practiceType based on mode selection
-    return assignPracticeTypes(to: sentences, modeSelection: modeSelection)
-}
-
-/// Assigns practiceType to sentences based on the user's mode selection.
-/// - Both modes: first half signing, second half comprehension
-/// - Signing only: all .words
-/// - Comprehension only: all .comprehension
-private func assignPracticeTypes(to sentences: [AISentenceModel], modeSelection: PracticeModeSelection) -> [AISentenceModel] {
-    guard !sentences.isEmpty else { return sentences }
-
-    if modeSelection.signing && modeSelection.comprehension {
-        // Split roughly half-and-half
-        let halfIndex = sentences.count / 2
-        return sentences.enumerated().map { index, sentence in
-            var s = sentence
-            s.practiceType = index < halfIndex ? .words : .comprehension
-            return s
-        }
-    } else if modeSelection.comprehension {
-        return sentences.map { sentence in
-            var s = sentence
-            s.practiceType = .comprehension
-            return s
-        }
-    } else {
-        // signing only (default)
-        return sentences.map { sentence in
-            var s = sentence
-            s.practiceType = .words
-            return s
-        }
     }
 }
 

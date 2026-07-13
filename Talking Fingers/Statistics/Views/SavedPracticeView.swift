@@ -90,7 +90,7 @@ struct SavedPracticeView: View {
                 onExtend: {
                     guard let categories = lastCategories else { return }
                     do {
-                        let more = try await GenerateSentencesView.generateSentences(
+                        let more = try await SentenceGenerationService.generateSentences(
                             categories: categories,
                             modeSelection: lastModeSelection
                         )
