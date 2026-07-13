@@ -4,16 +4,64 @@
 //
 //  Created by Krish Prasad on 3/15/26.
 //
+//  Wrapping flow layout: subviews fill each row left-to-right, wrapping to
+//  a new row when the width is exceeded. Rows can be leading-aligned
+//  (default), centered, or trailing-aligned within the available width.
+//
 
 import SwiftUI
 
 public struct FlowLayout: Layout {
-    @State var verticalSpacing: CGFloat
-    @State var horizontalSpacing: CGFloat
-    
-    public init(verticalSpacing: CGFloat = 8, horizontalSpacing: CGFloat = 8) {
+    var verticalSpacing: CGFloat
+    var horizontalSpacing: CGFloat
+    var alignment: HorizontalAlignment
+
+    public init(
+        verticalSpacing: CGFloat = 8,
+        horizontalSpacing: CGFloat = 8,
+        alignment: HorizontalAlignment = .leading
+    ) {
         self.verticalSpacing = verticalSpacing
         self.horizontalSpacing = horizontalSpacing
+        self.alignment = alignment
+    }
+
+    private struct Row {
+        var indices: [Int] = []
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+        var y: CGFloat = 0
+    }
+
+    private func computeRows(boundsWidth: CGFloat, proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        var rows: [Row] = []
+        var current = Row()
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+
+        for (index, subview) in subviews.enumerated() {
+            let size = subview.dimensions(in: proposal)
+
+            if x > 0, x + size.width > boundsWidth {
+                current.width = x - horizontalSpacing
+                rows.append(current)
+                y += current.height + verticalSpacing
+                current = Row(y: y)
+                x = 0
+            }
+
+            current.indices.append(index)
+            current.height = max(current.height, size.height)
+            current.y = y
+            x += size.width + horizontalSpacing
+        }
+
+        if !current.indices.isEmpty {
+            current.width = x - horizontalSpacing
+            rows.append(current)
+        }
+
+        return rows
     }
 
     public func sizeThatFits(
@@ -22,37 +70,12 @@ public struct FlowLayout: Layout {
         cache: inout Void
     ) -> CGSize {
         if let w = proposal.width, w > 0 {
-            let h = coordinates(boundsWidth: w, proposal: proposal, subviews: subviews).reduce(0, { max($0, $1.maxY) })
+            let rows = computeRows(boundsWidth: w, proposal: proposal, subviews: subviews)
+            let h = rows.last.map { $0.y + $0.height } ?? 0
             return CGSize(width: w, height: h)
         }
 
         return proposal.replacingUnspecifiedDimensions()
-    }
-
-    private func coordinates(boundsWidth: CGFloat, proposal: ProposedViewSize, subviews: Subviews) -> [CGRect] {
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-
-        var rectangles = [CGRect]()
-
-        for (_, subview) in subviews.enumerated() {
-            let viewDimensions = subview.dimensions(in: proposal)
-
-            if x > 0, x + viewDimensions.width > boundsWidth {
-                y += rowHeight + verticalSpacing
-                x = 0
-                rowHeight = 0
-            }
-
-            rowHeight = max(rowHeight, viewDimensions.height)
-
-            rectangles.append(CGRect(x: x, y: y, width: viewDimensions.width, height: viewDimensions.height))
-
-            x += viewDimensions.width + horizontalSpacing
-        }
-
-        return rectangles
     }
 
     public func placeSubviews(
@@ -61,29 +84,28 @@ public struct FlowLayout: Layout {
         subviews: Subviews,
         cache: inout Void
     ) {
+        let rows = computeRows(boundsWidth: bounds.width, proposal: proposal, subviews: subviews)
 
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-
-        for (_, subview) in subviews.enumerated() {
-            let viewDimensions = subview.dimensions(in: proposal)
-
-            if x > 0, x + viewDimensions.width > bounds.width {
-                y += rowHeight + verticalSpacing
-                x = 0
-                rowHeight = 0
+        for row in rows {
+            var x: CGFloat
+            switch alignment {
+            case .center:
+                x = bounds.minX + max(0, (bounds.width - row.width) / 2)
+            case .trailing:
+                x = bounds.minX + max(0, bounds.width - row.width)
+            default:
+                x = bounds.minX
             }
 
-            rowHeight = max(rowHeight, viewDimensions.height)
-
-            var point = CGPoint(x: bounds.minX + x, y: bounds.minY + y)
-            point.x += viewDimensions.width / 2
-            point.y += viewDimensions.height / 2
-
-            subview.place(at: point, anchor: .center, proposal: .unspecified)
-
-            x += viewDimensions.width + horizontalSpacing
+            for index in row.indices {
+                let size = subviews[index].dimensions(in: proposal)
+                subviews[index].place(
+                    at: CGPoint(x: x + size.width / 2, y: bounds.minY + row.y + size.height / 2),
+                    anchor: .center,
+                    proposal: .unspecified
+                )
+                x += size.width + horizontalSpacing
+            }
         }
     }
 }

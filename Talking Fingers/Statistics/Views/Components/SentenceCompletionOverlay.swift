@@ -2,7 +2,6 @@ import SwiftUI
 
 struct SentenceCompletionOverlay: View {
     let averageScore: Double
-    @Binding var isFavorited: Bool
     var onContinue: () -> Void
 
     private var roundedScore: Int { Int(averageScore.rounded()) }
@@ -78,30 +77,13 @@ struct SentenceCompletionOverlay: View {
 
     private var overlayContent: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center) {
-                HStack(spacing: 8) {
-                    Image(systemName: roundedScore >= 75 ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.jakarta(size: 24, weight: .semibold))
-                    Text(titleText)
-                        .font(.jakarta(size: 24, weight: .semibold))
-                }
-                .foregroundColor(textAccent)
-
-                Spacer()
-
-                Button(action: { isFavorited.toggle() }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: isFavorited ? "bookmark.fill" : "bookmark")
-                            .font(.jakarta(size: 22, weight: .medium))
-                        #if os(macOS)
-                        Text("Save")
-                            .font(.jakarta(size: 17, weight: .semibold))
-                        #endif
-                    }
-                    .foregroundColor(textAccent)
-                }
-                .buttonStyle(.plain)
+            HStack(spacing: 8) {
+                Image(systemName: roundedScore >= 75 ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.jakarta(size: 24, weight: .semibold))
+                Text(titleText)
+                    .font(.jakarta(size: 24, weight: .semibold))
             }
+            .foregroundColor(textAccent)
 
             Text("Accuracy: \(roundedScore)%")
                 .font(.jakarta(size: 17, weight: .regular))

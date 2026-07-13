@@ -22,10 +22,8 @@ struct AISentenceComprehensionView: View {
     @State private var lineChips: [CompWordChip] = []
     @State private var submitState: CompSubmitState = .idle
     @State private var totalAttemptCount: Int = 0
-    @State private var isResultBookmarked: Bool = false
     @State private var macCarouselIndex: Int = 0
     #if os(macOS)
-    @FocusState private var isMacCarouselFocused: Bool
     @State private var macKeyMonitor: Any?
     #endif
 
@@ -68,7 +66,6 @@ struct AISentenceComprehensionView: View {
                 ComprehensionAnswerFeedbackOverlay(
                     isCorrect: submitState == .correct,
                     answerPhrase: correctOrder.joined(separator: " "),
-                    isBookmarked: $isResultBookmarked,
                     onContinue: { onSentenceComplete?() }
                 )
                 .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -77,25 +74,11 @@ struct AISentenceComprehensionView: View {
         .animation(.easeInOut(duration: 0.2), value: submitState)
         .onAppear { setupChips() }
         #if os(macOS)
-        .focusable()
-        .focused($isMacCarouselFocused)
-        .focusEffectDisabled()
         .onAppear {
-            isMacCarouselFocused = true
             installMacCarouselKeyMonitor()
         }
         .onDisappear {
             removeMacCarouselKeyMonitor()
-        }
-        .onMoveCommand { direction in
-            switch direction {
-            case .left:
-                moveMacCarousel(by: -1)
-            case .right:
-                moveMacCarousel(by: 1)
-            default:
-                break
-            }
         }
         #endif
     }
@@ -226,7 +209,7 @@ struct AISentenceComprehensionView: View {
 
     private var answerArea: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CompWrappingHStack(horizontalSpacing: 10, verticalSpacing: 10) {
+            FlowLayout(verticalSpacing: 10, horizontalSpacing: 10) {
                 ForEach(lineChips) { chip in
                     chipView(
                         chip.text,
@@ -281,7 +264,7 @@ struct AISentenceComprehensionView: View {
     // MARK: - Word Bank
 
     private var wordBankView: some View {
-        CompWrappingHStack(horizontalSpacing: 10, verticalSpacing: 10, horizontalAlignment: .center) {
+        FlowLayout(verticalSpacing: 10, horizontalSpacing: 10, alignment: .center) {
             ForEach(allChips) { chip in
                 if lineChips.contains(where: { $0.id == chip.id }) {
                     // Shadow placeholder
@@ -356,7 +339,6 @@ struct AISentenceComprehensionView: View {
         lineChips = []
         submitState = .idle
         totalAttemptCount = 0
-        isResultBookmarked = false
         macCarouselIndex = 0
     }
 
@@ -406,78 +388,6 @@ private enum CompSubmitState: Equatable {
 private struct CompWordChip: Identifiable, Equatable {
     let id = UUID()
     let text: String
-}
-
-// MARK: - Wrapping HStack Layout
-
-private struct CompWrappingHStack: Layout {
-    var horizontalSpacing: CGFloat
-    var verticalSpacing: CGFloat
-    var horizontalAlignment: HorizontalAlignment = .leading
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var height: CGFloat = 0
-        for (i, row) in rows.enumerated() {
-            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            height += rowHeight
-            if i > 0 { height += verticalSpacing }
-        }
-        return CGSize(width: proposal.width ?? 0, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var y = bounds.minY
-        for (i, row) in rows.enumerated() {
-            if i > 0 { y += verticalSpacing }
-            let rowHeight = row.map { $0.sizeThatFits(.unspecified).height }.max() ?? 0
-            var x = startX(for: row, in: bounds)
-            for subview in row {
-                let size = subview.sizeThatFits(.unspecified)
-                subview.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + horizontalSpacing
-            }
-            y += rowHeight
-        }
-    }
-
-    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[LayoutSubviews.Element]] {
-        let maxWidth = proposal.width ?? .infinity
-        var rows: [[LayoutSubviews.Element]] = [[]]
-        var currentRowWidth: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentRowWidth + size.width > maxWidth && !rows[rows.count - 1].isEmpty {
-                rows.append([])
-                currentRowWidth = 0
-            }
-            rows[rows.count - 1].append(subview)
-            currentRowWidth += size.width + horizontalSpacing
-        }
-        return rows
-    }
-
-    private func startX(for row: [LayoutSubviews.Element], in bounds: CGRect) -> CGFloat {
-        let rowWidth = width(for: row)
-        switch horizontalAlignment {
-        case .center:
-            return bounds.minX + max(0, (bounds.width - rowWidth) / 2)
-        case .trailing:
-            return bounds.maxX - rowWidth
-        default:
-            return bounds.minX
-        }
-    }
-
-    private func width(for row: [LayoutSubviews.Element]) -> CGFloat {
-        guard !row.isEmpty else { return 0 }
-        let contentWidth = row.reduce(CGFloat.zero) { partialResult, subview in
-            partialResult + subview.sizeThatFits(.unspecified).width
-        }
-        return contentWidth + CGFloat(row.count - 1) * horizontalSpacing
-    }
 }
 
 #Preview {

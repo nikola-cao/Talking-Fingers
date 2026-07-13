@@ -11,7 +11,6 @@ import SwiftUI
 struct ComprehensionAnswerFeedbackOverlay: View {
     let isCorrect: Bool
     let answerPhrase: String
-    @Binding var isBookmarked: Bool
     var onContinue: () -> Void
 
     private var textAccent: Color {
@@ -41,30 +40,13 @@ struct ComprehensionAnswerFeedbackOverlay: View {
 
     private var overlayContent: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center) {
-                HStack(spacing: 8) {
-                    Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .font(.jakarta(size: 24, weight: .semibold))
-                    Text(titleText)
-                        .font(.jakarta(size: 24, weight: .semibold))
-                }
-                .foregroundColor(textAccent)
-
-                Spacer()
-
-                Button(action: { isBookmarked.toggle() }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: isBookmarked ? "bookmark.fill" : "bookmark")
-                            .font(.jakarta(size: 22, weight: .medium))
-                        #if os(macOS)
-                        Text("Save")
-                            .font(.jakarta(size: 17, weight: .semibold))
-                        #endif
-                    }
-                    .foregroundColor(textAccent)
-                }
-                .buttonStyle(.plain)
+            HStack(spacing: 8) {
+                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.jakarta(size: 24, weight: .semibold))
+                Text(titleText)
+                    .font(.jakarta(size: 24, weight: .semibold))
             }
+            .foregroundColor(textAccent)
 
             (Text("Answer: ").font(.jakarta(size: 17, weight: .semibold)) + Text(answerPhrase).font(.jakarta(size: 17, weight: .regular)))
                 .foregroundColor(textAccent)

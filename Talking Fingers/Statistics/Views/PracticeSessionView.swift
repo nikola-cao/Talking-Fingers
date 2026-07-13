@@ -25,7 +25,6 @@ struct PracticeSessionView: View {
     @State private var signingPageIndex: Int = 1
     @State private var showSigningSentenceCompletionOverlay: Bool = false
     @State private var signingSentenceAverageScore: Double = 0
-    @State private var isSigningSentenceFavorited: Bool = false
 
     /// Shared camera VM kept alive for the whole session so sentence changes
     /// don't tear the AVCaptureSession down and build a new one (which was
@@ -208,7 +207,6 @@ struct PracticeSessionView: View {
                             currentPage: $signingPageIndex,
                             onSentenceFinished: { average in
                                 signingSentenceAverageScore = average
-                                isSigningSentenceFavorited = false
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showSigningSentenceCompletionOverlay = true
                                 }
@@ -261,7 +259,6 @@ struct PracticeSessionView: View {
             if showSigningSentenceCompletionOverlay {
                 SentenceCompletionOverlay(
                     averageScore: signingSentenceAverageScore,
-                    isFavorited: $isSigningSentenceFavorited,
                     onContinue: continueAfterSigningSentenceOverlay
                 )
                 .frame(maxWidth: .infinity)
