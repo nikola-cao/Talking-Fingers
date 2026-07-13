@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 
 struct MacProfileView: View {
     @Environment(AuthenticationViewModel.self) private var authVM
-    @StateObject private var vm = ProfileWidgetsVM()
+    @State private var vm = ProfileWidgetsVM()
     @State private var isEditing: Bool = false
     @State private var showingAddWidgets: Bool = false
     @State private var draggingWidgetID: UUID?
@@ -561,7 +561,7 @@ private struct DragReorderModifier: ViewModifier {
 // MARK: - Add Widgets sheet (macOS)
 
 struct MacAddWidgetsSheet: View {
-    @ObservedObject var vm: ProfileWidgetsVM
+    var vm: ProfileWidgetsVM
     let onAdd: (WidgetType) -> Void
     let onClose: () -> Void
 

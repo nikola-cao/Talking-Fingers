@@ -6,10 +6,11 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
-class ProfileWidgetsVM: ObservableObject {
-    @Published var displayedWidgets: [ProfileWidget] = [] {
+@Observable
+class ProfileWidgetsVM {
+    var displayedWidgets: [ProfileWidget] = [] {
         didSet {
             saveWidgets()
         }
