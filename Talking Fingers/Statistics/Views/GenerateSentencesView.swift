@@ -259,19 +259,7 @@ private func generateSentencesForCategories(_ categories: Set<TermCategory>, mod
     )
 
     // 4. Assign practiceType based on mode selection
-    let assignedSentences = assignPracticeTypes(to: sentences, modeSelection: modeSelection)
-        
-    print("📋 GENERATED SENTENCES:")
-    for (index, sentence) in assignedSentences.enumerated() {
-        print("\n--- Sentence \(index + 1) ---")
-        print("Text: \(sentence.sentence)")
-        print("Gloss: \(sentence.gloss.map { $0.rawValue })")
-        print("Practice Type: \(sentence.practiceType.rawValue)")
-        print("Completed: \(sentence.completed)")
-    }
-    print("\n✅ Total: \(assignedSentences.count) sentences\n")
-        
-    return assignedSentences
+    return assignPracticeTypes(to: sentences, modeSelection: modeSelection)
 }
 
 /// Assigns practiceType to sentences based on the user's mode selection.

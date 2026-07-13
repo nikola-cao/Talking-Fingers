@@ -203,7 +203,6 @@ struct AISentenceComprehensionView: View {
 #endif
     
     private func signPlaceholderCard(for term: Term) -> some View {
-#if os(macOS)
         Group {
             if let gifFileName = term.defaultGifFileName {
                 GIFView(gifFileName: gifFileName)
@@ -221,25 +220,6 @@ struct AISentenceComprehensionView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-#else
-        Group {
-            if let gifFileName = term.defaultGifFileName {
-                GIFView(gifFileName: gifFileName)
-                    .id(gifFileName)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                VStack(spacing: 2) {
-                    Image(systemName: "person.fill")
-                        .font(.jakarta(size: 24))
-                        .foregroundColor(.gray.opacity(0.5))
-                    Text("No GIF")
-                        .font(.jakarta(size: 9))
-                        .foregroundColor(.gray.opacity(0.65))
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-#endif
     }
 
     // MARK: - Answer Area (bordered box — red/green/gray border)

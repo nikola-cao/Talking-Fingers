@@ -95,12 +95,6 @@ struct PracticeSessionView: View {
         let count = sentences.wrappedValue.count
         let clamped = min(max(0, initialSentenceIndex), count)
         self._currentSentenceIndex = State(initialValue: clamped)
-        
-        print("🟡 [PracticeSessionView] init called")
-        print("   - practiceTitle: \(practiceTitle)")
-        print("   - selectedCategories: \(selectedCategories?.map(\.rawValue) ?? ["nil"])")
-        print("   - sentences count: \(count)")
-        print("   - initialSentenceIndex: \(initialSentenceIndex) → clamped: \(clamped)")
     }
 
     private var sessionProgress: Double {
@@ -327,15 +321,11 @@ struct PracticeSessionView: View {
                                 markCurrentSentenceCompletedAndAdvance()
                             },
                             onSentenceFinished: { average in
-                                print("🟠 [PracticeSessionView] onSentenceFinished called - average: \(average)")
-                                print("   - practiceTitle at this moment: \(practiceTitle)")
-                                print("   - showPracticeEntry: \(showPracticeEntry)")
                                 signingSentenceAverageScore = average
                                 isSigningSentenceFavorited = false
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     showSigningSentenceCompletionOverlay = true
                                 }
-                                print("🟠 [PracticeSessionView] set showSigningSentenceCompletionOverlay = true")
                             },
                             onSubtitleChange: { subtitle in
                                 signingSubtitle = subtitle
@@ -404,7 +394,6 @@ struct PracticeSessionView: View {
             #endif
         }
         .onAppear {
-            print("🟡 [PracticeSessionView] onAppear - practiceTitle: \(practiceTitle), showPracticeEntry: \(showPracticeEntry)")
             #if os(macOS)
             sessionCameraVM.isMirrored = true
             #endif
@@ -416,7 +405,6 @@ struct PracticeSessionView: View {
             sessionCameraVM.start()
         }
         .onDisappear {
-            print("🟡 [PracticeSessionView] onDisappear - practiceTitle: \(practiceTitle)")
             sessionCameraVM.stop()
         }
         .sheet(isPresented: $showLeaveConfirmation) {
@@ -667,9 +655,6 @@ struct PracticeSessionView: View {
 
     private func handlePrimaryActionButtonTap() {
         if showPracticeEntry {
-            print("🟡 [PracticeSessionView] Start tapped - transitioning from entry to signing")
-            print("   - practiceTitle: \(practiceTitle)")
-            print("   - selectedCategories: \(selectedCategories?.map(\.rawValue) ?? ["nil"])")
             signingSubtitle = "New sentence!"
             signingPageIndex = 1
             showPracticeEntry = false

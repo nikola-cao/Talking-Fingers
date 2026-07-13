@@ -18,7 +18,6 @@ struct Talking_FingersApp: App {
     
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            StatsWidget.self,
             FlashcardModel.self,
             User.self,
             SavedPracticeModel.self,
