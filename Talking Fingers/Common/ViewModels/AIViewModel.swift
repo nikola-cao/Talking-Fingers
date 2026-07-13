@@ -11,7 +11,7 @@ import FirebaseFirestore
 
 @Observable class AIViewModel {
     var openAIKey: String?
-    let db = Firestore.firestore()
+    private var db: Firestore { Firebase.db }
     private let openAIURL = "https://api.openai.com/v1/chat/completions"
     private let requestedSentenceCount = 7
     private let targetValidSentenceCount = 5

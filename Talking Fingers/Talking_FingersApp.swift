@@ -8,38 +8,6 @@
 import SwiftUI
 import SwiftData
 import FirebaseCore
-// 1. Conditional Imports
-#if canImport(UIKit)
-import UIKit
-#elseif canImport(AppKit)
-import AppKit
-#endif
-
-// 2. Cross-Platform Delegate
-class AppDelegate: NSObject {
-    // This will work for iOS
-    #if os(iOS)
-    func application(_ application: UIApplication,
-                     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        setupFirebase()
-        return true
-    }
-    #endif
-
-    // This will work for macOS
-    #if os(macOS)
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        setupFirebase()
-    }
-    #endif
-
-    private func setupFirebase() {
-        if FirebaseApp.app() == nil {
-            FirebaseApp.configure()
-            print("Firebase configured successfully.")
-        }
-    }
-}
 
 @main
 struct Talking_FingersApp: App {
@@ -82,7 +50,9 @@ struct Talking_FingersApp: App {
         #if os(macOS)
         MacOSBundledFontRegistration.registerPlusJakartaSansTTFs()
         #endif
-        FirebaseApp.configure()
+        if FirebaseApp.app() == nil {
+            FirebaseApp.configure()
+        }
         _authVM = State(initialValue: AuthenticationViewModel())
     }
     

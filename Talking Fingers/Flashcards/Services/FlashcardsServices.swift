@@ -27,7 +27,7 @@ final class FlashcardsServices {
         let updatedAt: Date?
     }
 
-    private let db = Firestore.firestore()
+    private var db: Firestore { Firebase.db }
     private var listener: ListenerRegistration?
 
     deinit {

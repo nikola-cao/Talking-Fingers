@@ -30,6 +30,9 @@ class AuthenticationViewModel {
             guard let self = self else { return }
 
             if let user = user {
+                // An explicit login/register flow is already hydrating the profile;
+                // loading here too would race it and clobber its result.
+                guard !self.isLoading else { return }
                 Task {
                     await self.loadCurrentUserProfile(for: user, isLoggingIn: false)
                 }
@@ -67,28 +70,26 @@ class AuthenticationViewModel {
         }
     }
     
-    func register(email: String, password: String, name: String, handedness: String? = nil) {
-        sessionHandedness = normalizeHandedness(handedness)
-        auth.createUser(withEmail: email, password: password) {result, error in
-            if let error = error {
-                print("Error registering: \(error.localizedDescription)")
-            } else {
-                print("User registered: \(result?.user.uid ?? "")")
-            }
-            
-            guard let user = result?.user else {return}
-            let changeRequest = user.createProfileChangeRequest()
+    func register(email: String, password: String, name: String, handedness: String? = nil) async {
+        isLoading = true
+        errorMessage = nil
+        let normalizedHandedness = normalizeHandedness(handedness)
+        sessionHandedness = normalizedHandedness
+
+        do {
+            let result = try await auth.createUser(withEmail: email, password: password)
+            let authUser = result.user
+
+            let changeRequest = authUser.createProfileChangeRequest()
             changeRequest.displayName = name
-            changeRequest.commitChanges { error in
-                if let error = error {
-                    print("Failed to set displayName: \(error.localizedDescription)")
-                } else {
-                    print("FirebaseAuth displayName set successfully")
-                }
+            do {
+                try await changeRequest.commitChanges()
+            } catch {
+                print("Failed to set displayName: \(error.localizedDescription)")
             }
-            let newUser = User(userId: user.uid, name: name, email: email)
-            newUser.handedness = handedness
-            
+
+            let newUser = User(userId: authUser.uid, name: name, email: email, handedness: normalizedHandedness)
+
             var userData: [String: Any] = [
                 "userId": newUser.userId,
                 "name": newUser.name,
@@ -96,21 +97,27 @@ class AuthenticationViewModel {
                 "streakCount": 0,
                 "profileUpdatedAt": Timestamp(date: Date())
             ]
-            if let handedness = handedness {
-                userData["handedness"] = handedness
+            if let normalizedHandedness {
+                userData["handedness"] = normalizedHandedness
             }
-            Firebase.db.collection("Users").document(newUser.userId).setData(userData) { err in
-                if let err = err {
-                    print("Error saving user: \(err)")
-                } else {
-                    print("User profile saved in Firestore")
-                    DispatchQueue.main.async {
-                        self.currentUser = newUser
-                        self.sessionHandedness = newUser.handedness
-                        self.isLoggedIn = true
-                        self.isLoading = false
-                    }
-                }
+            do {
+                try await Firebase.db.collection("Users").document(newUser.userId).setData(userData)
+            } catch {
+                // Profile doc is re-uploaded by the next profile sync; don't block sign-in on it.
+                print("Error saving user profile: \(error)")
+            }
+
+            await MainActor.run {
+                self.currentUser = newUser
+                self.sessionHandedness = newUser.handedness
+                self.isLoggedIn = true
+                self.isLoading = false
+                self.isInitializingSession = false
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = error.localizedDescription
+                self.isLoading = false
             }
         }
     }

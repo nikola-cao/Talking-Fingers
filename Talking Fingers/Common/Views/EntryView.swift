@@ -60,11 +60,10 @@ struct EntryView: View {
             .background(
                 NavigationLink(isActive: $pushOnboarding) {
                     OnboardingView(onFinished: { name, handedness in
-                        // After onboarding finishes, register with the name and handedness from onboarding, then log in
+                        // Registration signs the user in and hydrates the session itself.
                         Task {
                             authVM.setSessionHandedness(handedness)
                             await authVM.register(email: pendingEmail, password: pendingPassword, name: name, handedness: handedness)
-                            await authVM.login(email: pendingEmail, password: pendingPassword)
                         }
                     })
                     .environment(authVM)

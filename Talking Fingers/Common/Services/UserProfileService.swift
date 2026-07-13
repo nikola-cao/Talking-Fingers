@@ -19,7 +19,7 @@ final class UserProfileService {
         let profileUpdatedAt: Date?
     }
 
-    private let db = Firestore.firestore()
+    private var db: Firestore { Firebase.db }
 
     private var userDocument: DocumentReference? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
