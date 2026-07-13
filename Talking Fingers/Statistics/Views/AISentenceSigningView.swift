@@ -4,13 +4,16 @@
 //
 //  Created by Aimee on 2/22/26.
 //
+//  Two-page signing step shared by iOS and macOS: sentence + gloss intro,
+//  then the live camera signing page. Session chrome (progress bar,
+//  subtitle, Continue button) is owned by PracticeSessionView.
+//
 
 import SwiftUI
 
 struct AISentenceSigningView: View {
     @Binding var sentenceModel: AISentenceModel
     @Binding var currentPage: Int
-    var onSentenceComplete: (() -> Void)? = nil
     var onSentenceFinished: ((Double) -> Void)? = nil
     var onSubtitleChange: ((String) -> Void)? = nil
     /// When set (e.g. during sentence completion), all gloss terms use this color.
@@ -40,9 +43,6 @@ struct AISentenceSigningView: View {
             } else if currentPage == 2 {
                 LiveSigningView(
                     sentenceModel: $sentenceModel,
-                    onBack: {
-                        withAnimation { currentPage = 1 }
-                    },
                     onSentenceFinished: onSentenceFinished,
                     glossUniformColor: glossUniformColor,
                     externalCameraVM: externalCameraVM

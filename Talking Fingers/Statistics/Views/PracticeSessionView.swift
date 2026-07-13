@@ -144,13 +144,6 @@ struct PracticeSessionView: View {
     }
 
     private var currentTopSubtitle: String {
-        #if os(macOS)
-        // AISentenceSigningViewMacOS manages its own subtitle during signing.
-        if !showPracticeEntry, currentSentenceIndex < sentences.count,
-           sentences[currentSentenceIndex].practiceType != .comprehension {
-            return ""
-        }
-        #endif
         if showPracticeEntry { return "Here we go!" }
         if currentSentenceIndex >= sentences.count { return "Practice completed!" }
         if sentences[currentSentenceIndex].practiceType == .comprehension { return "New sentence!" }
@@ -163,13 +156,6 @@ struct PracticeSessionView: View {
     /// Hide the session bar while on the live camera / per-word signing step;
     /// it returns on the sentence intro + gloss page (page 1) for the next sentence.
     private var shouldShowSessionProgressBar: Bool {
-        #if os(macOS)
-        // On macOS, AISentenceSigningViewMacOS manages its own progress bar for signing.
-        if !showPracticeEntry, currentSentenceIndex < sentences.count,
-           sentences[currentSentenceIndex].practiceType != .comprehension {
-            return false
-        }
-        #endif
         if showPracticeEntry { return true }
         guard currentSentenceIndex < sentences.count else { return true }
         if sentences[currentSentenceIndex].practiceType == .comprehension { return true }
@@ -292,34 +278,9 @@ struct PracticeSessionView: View {
                         )
                         .id(currentSentenceIndex)
                     } else {
-                        #if os(macOS)
-                        AISentenceSigningViewMacOS(
-                            sentenceModel: $sentences[currentSentenceIndex],
-                            currentPage: $signingPageIndex,
-                            sessionProgress: sessionProgress,
-                            onSentenceFinished: { average in
-                                signingSentenceAverageScore = average
-                                isSigningSentenceFavorited = false
-                                withAnimation(.easeOut(duration: 0.16)) {
-                                    showSigningSentenceCompletionOverlay = true
-                                }
-                            },
-                            onSubtitleChange: { subtitle in
-                                signingSubtitle = subtitle
-                            },
-                            glossUniformColor: showSigningSentenceCompletionOverlay
-                                ? SentenceCompletionOverlay.glossAndButtonColor(for: signingSentenceAverageScore)
-                                : nil,
-                            externalCameraVM: sessionCameraVM
-                        )
-                        .id(currentSentenceIndex)
-                        #else
                         AISentenceSigningView(
                             sentenceModel: $sentences[currentSentenceIndex],
                             currentPage: $signingPageIndex,
-                            onSentenceComplete: {
-                                markCurrentSentenceCompletedAndAdvance()
-                            },
                             onSentenceFinished: { average in
                                 signingSentenceAverageScore = average
                                 isSigningSentenceFavorited = false
@@ -336,7 +297,6 @@ struct PracticeSessionView: View {
                             externalCameraVM: sessionCameraVM
                         )
                         .id(currentSentenceIndex)
-                        #endif
                     }
                 } else if !isLeaving {
                     completionContent

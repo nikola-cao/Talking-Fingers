@@ -4,11 +4,14 @@
 //
 //  Created by Krish Prasad on 3/1/26.
 //
+//  Live camera signing step shared by iOS and macOS. iOS shows a fixed-height
+//  camera and a 4-slot carousel of word circles; macOS fills the available
+//  height and shows every word's circle at once.
+//
 import SwiftUI
 
 struct LiveSigningView: View {
     @Binding var sentenceModel: AISentenceModel
-    var onBack: () -> Void
     var onSentenceFinished: ((Double) -> Void)? = nil
     /// When non-nil, the top gloss line uses this color for every word (e.g. with the score overlay).
     var glossUniformColor: Color? = nil
@@ -21,7 +24,7 @@ struct LiveSigningView: View {
     // Tracks which words the user explicitly skipped (not credited as completed).
     @State private var skippedWords: Set<Int> = []
     // True once the live signing view has reported a confidence at/above the
-    // "good" threshold for the current word. Gates the Continue button.
+    // "good" threshold for the current word. Gates the auto-advance.
     @State private var passedThreshold: Bool = false
     // Pending auto-advance task started when threshold is first reached.
     @State private var autoAdvanceTask: Task<Void, Never>?
@@ -34,13 +37,12 @@ struct LiveSigningView: View {
     @State private var showCorrectCheckmark: Bool = false
     @State private var correctCheckmarkTask: Task<Void, Never>?
 
-    /// How long to wait after reaching the threshold before auto-advancing
-    /// if the user hasn't manually tapped Continue.
+    /// How long to wait after reaching the threshold before auto-advancing.
     private let autoAdvanceDelay: Duration = .seconds(0.5)
 
     var glossWords: [Term] { sentenceModel.gloss }
     var isFinished: Bool { currentWordIndex >= glossWords.count }
-    
+
     private var isSimulator: Bool {
         #if targetEnvironment(simulator)
         return true
@@ -51,6 +53,12 @@ struct LiveSigningView: View {
 
     private var currentTargetWord: String {
         glossWords[safe: currentWordIndex]?.rawValue ?? ""
+    }
+
+    /// `nil` once finished so the camera's comparison overlay hides.
+    private var currentComparisonTarget: String? {
+        guard !isFinished else { return nil }
+        return currentTargetWord.lowercased()
     }
 
     var body: some View {
@@ -69,15 +77,20 @@ struct LiveSigningView: View {
             // Live camera tied to the current target word.
             ZStack(alignment: .bottomTrailing) {
                 SigningPracticeView(
-                    signName: currentTargetWord.lowercased(),
+                    signName: currentComparisonTarget,
                     onConfidenceChange: { confidence in
                         handleThresholdReached(confidence: confidence)
                     },
+                    showsLeaveButton: false,
                     usesInternalPadding: false,
                     externalCameraVM: externalCameraVM
                 )
+                #if os(iOS)
                 .frame(maxWidth: .infinity)
                 .frame(height: 480)
+                #else
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                #endif
 
                 if showCorrectCheckmark {
                     SigningCorrectCheckmarkOverlay()
@@ -125,8 +138,12 @@ struct LiveSigningView: View {
                     showHintSheet = false
                 }
             )
+            #if os(macOS)
+            .frame(minWidth: 900, minHeight: 600)
+            #else
             .presentationDetents([.large])
             .presentationDragIndicator(.hidden)
+            #endif
         }
     }
 
@@ -154,6 +171,19 @@ struct LiveSigningView: View {
     }
 
     // MARK: Word Progress Circles
+
+    #if os(macOS)
+    /// macOS has the width to show every word's circle at once.
+    private var wordProgressCircles: some View {
+        HStack(spacing: 16) {
+            ForEach(Array(glossWords.enumerated()), id: \.offset) { index, _ in
+                circleIcon(for: index)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+    #else
+    /// iOS shows a sliding window of up to 4 circles centered on the current word.
     private var wordProgressCircles: some View {
         HStack(spacing: 0) {
             ForEach(visibleProgressIndices, id: \.self) { index in
@@ -184,11 +214,17 @@ struct LiveSigningView: View {
         let startIndex = activeIndex < 3 ? 0 : min(activeIndex - 2, maxStartIndex)
         return Array(startIndex..<(startIndex + visibleCount))
     }
+    #endif
 
-    /// Fixed carousel slot sizing keeps 1-4 visible dots evenly distributed.
+    /// Fixed carousel slot sizing keeps the circles evenly distributed.
+    #if os(macOS)
+    private static let progressCircleColumnWidth: CGFloat = 72
+    private static let currentProgressCircleDiameter: CGFloat = 62
+    #else
     private static let progressCircleColumnWidth: CGFloat = 92
-    private static let progressCircleDiameter: CGFloat = 52
     private static let currentProgressCircleDiameter: CGFloat = 68
+    #endif
+    private static let progressCircleDiameter: CGFloat = 52
 
     @ViewBuilder
     private func circleIcon(for index: Int) -> some View {
@@ -266,17 +302,16 @@ struct LiveSigningView: View {
     }
 
     /// Called by the camera view when confidence crosses the "good" threshold.
-    /// Unlocks the Continue button and schedules an auto-advance after a few
-    /// seconds in case the user doesn't tap it themselves.
+    /// Schedules an auto-advance shortly after the first pass.
     private func handleThresholdReached(confidence: Double) {
         guard !isFinished else { return }
-        
+
         // Track max score after passing threshold
         if passedThreshold {
             currentWordMaxScore = max(currentWordMaxScore, confidence)
             return
         }
-        
+
         passedThreshold = true
         currentWordMaxScore = confidence
         flashCorrectCheckmark()
@@ -335,8 +370,9 @@ struct LiveSigningView: View {
             finalizeAndComplete()
         }
     }
-    
+
     private func finalizeAndComplete() {
+        externalCameraVM?.stopComparing()
         // Build array of word scores in order, then apply a user-facing
         // boost (capped 0…100) before persisting and averaging.
         let rawScores = (0..<glossWords.count).map { wordMaxScores[$0] ?? 0 }
