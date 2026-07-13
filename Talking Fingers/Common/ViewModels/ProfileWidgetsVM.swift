@@ -79,8 +79,4 @@ class ProfileWidgetsVM: ObservableObject {
             !displayedWidgets.contains(where: { $0.type == type })
         }
     }
-    
-    var removableWidgets: [ProfileWidget] {
-        displayedWidgets
-    }
 }

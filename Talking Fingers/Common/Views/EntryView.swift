@@ -115,12 +115,8 @@ struct Login: View {
 struct Register: View {
     @Environment(AuthenticationViewModel.self) var authVM
     let onSuccess: (_ email: String, _ password: String) -> Void
-    @State private var name = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var passwordConfirm = ""
-    @State private var confirmPasswordErrorMessage: String?
-    @State private var error: Bool = false
     var body: some View {
         VStack {
             TextField("Email", text: $email)

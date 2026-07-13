@@ -13,14 +13,7 @@ class User {
     @Attribute(.unique) var userId: String
     var name: String
     var email: String
-    var password: String
-    var birthday: Date
     var handedness: String? // "left" or "right"
-    
-    @Relationship(deleteRule: .cascade)
-    var flashcards: [FlashcardModel]
-    
-    var unlockedCategories: [String]
     var streakCount: Int = 0
     var lastActivity: Date?
     /// When profile or streak fields were last changed locally.
@@ -32,10 +25,6 @@ class User {
         self.userId = userId
         self.name = name
         self.email = email
-        self.password = ""
-        self.birthday = Date()
-        self.flashcards = []
-        self.unlockedCategories = []
         self.streakCount = 0
         self.lastActivity = nil
         self.profileUpdatedAt = nil
