@@ -34,6 +34,13 @@ class AuthenticationViewModel {
                 // loading here too would race it and clobber its result.
                 guard !self.isLoading else { return }
                 Task {
+                    // A keychain-cached session can outlive the account (e.g. the
+                    // user was deleted in the Firebase console). Confirm it still
+                    // exists server-side before restoring the session.
+                    guard await self.restoredSessionIsValid(user) else {
+                        try? self.auth.signOut()
+                        return
+                    }
                     await self.loadCurrentUserProfile(for: user, isLoggingIn: false)
                 }
             } else {
@@ -145,6 +152,23 @@ class AuthenticationViewModel {
                 try await UserProfileService().uploadHandedness(normalized)
             } catch {
                 print("Failed to upload handedness: \(error)")
+            }
+        }
+    }
+
+    /// Checks with the Firebase servers that a keychain-restored user still
+    /// exists and is enabled. Transient failures (e.g. offline) keep the
+    /// cached session so the app still works without a connection.
+    private func restoredSessionIsValid(_ user: FirebaseAuth.User) async -> Bool {
+        do {
+            try await user.reload()
+            return true
+        } catch {
+            switch AuthErrorCode(rawValue: (error as NSError).code) {
+            case .userNotFound, .userDisabled, .userTokenExpired, .invalidUserToken, .invalidCredential:
+                return false
+            default:
+                return true
             }
         }
     }
