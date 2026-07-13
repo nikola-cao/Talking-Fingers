@@ -54,7 +54,9 @@ struct Talking_FingersApp: App {
             StatsWidget.self,
             FlashcardModel.self,
             User.self,
-            SavedPracticeModel.self
+            SavedPracticeModel.self,
+            AnalyticsModel.self,
+            PracticeAttemptModel.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 

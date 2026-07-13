@@ -93,6 +93,8 @@ class AuthenticationViewModel {
                 "userId": newUser.userId,
                 "name": newUser.name,
                 "email": newUser.email,
+                "streakCount": 0,
+                "profileUpdatedAt": Timestamp(date: Date())
             ]
             if let handedness = handedness {
                 userData["handedness"] = handedness
@@ -127,7 +129,16 @@ class AuthenticationViewModel {
     }
 
     func setSessionHandedness(_ handedness: String?) {
-        sessionHandedness = normalizeHandedness(handedness)
+        let normalized = normalizeHandedness(handedness)
+        sessionHandedness = normalized
+        currentUser?.handedness = normalized
+        Task {
+            do {
+                try await UserProfileService().uploadHandedness(normalized)
+            } catch {
+                print("Failed to upload handedness: \(error)")
+            }
+        }
     }
 
     private func loadCurrentUserProfile(for authUser: FirebaseAuth.User, fallbackEmail: String? = nil, isLoggingIn: Bool) async {
@@ -142,6 +153,9 @@ class AuthenticationViewModel {
                 email: (data?["email"] as? String) ?? authUser.email ?? fallbackEmail ?? "",
                 handedness: handedness
             )
+            hydratedUser.streakCount = data?["streakCount"] as? Int ?? 0
+            hydratedUser.lastActivity = (data?["lastActivity"] as? Timestamp)?.dateValue()
+            hydratedUser.profileUpdatedAt = (data?["profileUpdatedAt"] as? Timestamp)?.dateValue()
 
             DispatchQueue.main.async {
                 self.currentUser = hydratedUser

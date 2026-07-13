@@ -25,6 +25,15 @@ struct ContentView: View {
             }
         }
         .environment(authVM)
+        .onAppear {
+            if let user = authVM.currentUser {
+                Task { await dataVM.syncAuthenticatedUser(user) }
+            }
+        }
+        .onChange(of: authVM.currentUser?.userId) { _, userId in
+            guard userId != nil, let user = authVM.currentUser else { return }
+            Task { await dataVM.syncAuthenticatedUser(user) }
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active, let currentUser = users.first {
                 dataVM.checkAndResetStreak(for: currentUser)

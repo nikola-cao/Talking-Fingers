@@ -70,6 +70,10 @@ struct DashboardView: View {
         }.count
         return min(completedToday, dailyQueue.requestedLimit)
     }
+
+    private var currentStreak: Int {
+        users.first?.streakCount ?? 0
+    }
     
     private var categoryScopedCards: [FlashcardModel] {
         // Guard against mismatched remote records: category views should only show
@@ -297,7 +301,7 @@ struct DashboardView: View {
                             activeFlow = .dailyChallenge
                         } label: {
                             DailyChallengeCard(
-                                streak: 3,
+                                streak: currentStreak,
                                 completed: dailyChallengeCompleted,
                                 total: dailyQueue.requestedLimit
                             )
@@ -521,7 +525,7 @@ struct DashboardView: View {
                     activeFlow = .dailyChallenge
                 } label: {
                     DailyChallengeCard(
-                        streak: 3,
+                        streak: currentStreak,
                         completed: dailyChallengeCompleted,
                         total: dailyQueue.requestedLimit
                     )

@@ -174,6 +174,8 @@ class FlashcardVM {
     }
     
     func handleAnswer(for card: FlashcardModel, correct: Bool, user: User?, dataVM: SwiftDataVM) {
+        dataVM.recordAttempt(term: card.term, correct: correct)
+
         if let user {
             dataVM.updateStreak(for: user)
         }
@@ -211,6 +213,8 @@ class FlashcardVM {
                 await updateFlashcard(card, modelContext: modelContext)
             }
         }
+
+        dataVM.recordDailyMasterySnapshotIfNeeded()
     }
     
     func nextCard() -> FlashcardModel? {

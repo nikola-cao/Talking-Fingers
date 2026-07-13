@@ -94,9 +94,34 @@ class AnalyticsVM {
     }
     
     func totalMasteryOverTime(flashcards: [FlashcardModel]) -> AnalyticsModel {
-        let flashcardVM = FlashcardVM()
-        let progress = flashcardVM.returnProgress(flashcards: flashcards)
-        return AnalyticsModel(date: Date(), value: progress)
+        let value = masteryPercentage(for: flashcards)
+        let snapshot = AnalyticsModel(date: Date(), value: value)
+        modelContext?.insert(snapshot)
+        save()
+        return snapshot
+    }
+
+    func masteryPercentage(for flashcards: [FlashcardModel]) -> Float {
+        guard !flashcards.isEmpty else { return 0 }
+        var total: Float = 0
+        for flashcard in flashcards {
+            switch flashcard.progress {
+            case .new: total += 0
+            case .learning: total += 40
+            case .polishing: total += 70
+            case .mastered: total += 100
+            }
+        }
+        return total / Float(flashcards.count)
+    }
+
+    func masteryHistory(limit: Int = 30) -> [AnalyticsModel] {
+        guard let modelContext else { return [] }
+        var descriptor = FetchDescriptor<AnalyticsModel>(
+            sortBy: [SortDescriptor(\.date, order: .reverse)]
+        )
+        descriptor.fetchLimit = limit
+        return (try? modelContext.fetch(descriptor)) ?? []
     }
 
     func flashcardsSucceededThisWeek(flashcards: [FlashcardModel]) -> Int {

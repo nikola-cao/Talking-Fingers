@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 enum TFWidgetColors {
     static let gold = Color(hex: 0xF8BC3A)
@@ -52,6 +53,7 @@ struct ProfileWidgetsView: View {
     @StateObject private var vm = ProfileWidgetsVM()
     @State private var mode: ScreenMode = .regular
     @Environment(AuthenticationViewModel.self) var authVM
+    @Environment(SwiftDataVM.self) private var dataVM
     @State private var showProfile = false
     
     private let presentation: PresentationStyle
@@ -512,12 +514,19 @@ struct WidgetWiggleModifier: ViewModifier {
 }
 
 private struct DailyChallengeHeaderTrailing: View {
+    @Query private var users: [User]
+
+    private var streakLabel: String {
+        let count = users.first?.streakCount ?? 0
+        return count == 1 ? "1 Day Streak" : "\(count) Day Streak"
+    }
+
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(TFWidgetColors.gold)
-            Text("2 Day Streak")
+            Text(streakLabel)
                 .font(.subheadline)
                 .foregroundStyle(TFWidgetColors.black)
         }
@@ -585,16 +594,22 @@ struct AddWidgetsScreen: View {
 }
 
 struct StreakWidgetContent: View {
+    @Query private var users: [User]
+
+    private var streakCount: Int {
+        users.first?.streakCount ?? 0
+    }
+
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "flame.fill")
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundStyle(TFWidgetColors.gold)
             VStack(alignment: .leading, spacing: 4) {
-                Text("10")
+                Text("\(streakCount)")
                     .font(.system(size: 28, weight: .bold))
                     .fontWeight(.bold)
-                Text("days in a row")
+                Text(streakCount == 1 ? "day in a row" : "days in a row")
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(TFWidgetColors.darkerGray)
             }
@@ -605,13 +620,15 @@ struct StreakWidgetContent: View {
 }
 
 struct WordsLearnedWidgetContent: View {
+    @Environment(SwiftDataVM.self) private var dataVM
+
     var body: some View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: "book.fill")
                 .font(.system(size: 24, weight: .semibold))
                 .foregroundStyle(TFWidgetColors.gold)
             VStack(alignment: .leading, spacing: 4) {
-                Text("67")
+                Text("\(dataVM.wordsLearnedCount())")
                     .font(.system(size: 28, weight: .bold))
                     .fontWeight(.bold)
                 Text("words learned")
@@ -628,13 +645,19 @@ struct WordsLearnedWidgetContent: View {
 }
 
 struct RecentProgressWidgetContent: View {
+    @Environment(SwiftDataVM.self) private var dataVM
+
+    private var masteryPercentage: Int {
+        Int(dataVM.masteryPercentage(for: dataVM.fetchFlashcards()).rounded())
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "medal")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(TFWidgetColors.lightBlue)
-                Text("People")
+                Text("Overall Mastery")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(TFWidgetColors.textMuted)
@@ -645,7 +668,7 @@ struct RecentProgressWidgetContent: View {
                 GeometryReader { proxy in
                     let w = proxy.size.width
                     let h: CGFloat = 10
-                    let progress: CGFloat = 0.27
+                    let progress = CGFloat(masteryPercentage) / 100
                     let fillW = max(0, w * progress)
                     
                     ZStack(alignment: .leading) {
@@ -659,7 +682,7 @@ struct RecentProgressWidgetContent: View {
                 }
                 .frame(height: 10)
                 
-                Text("27%")
+                Text("\(masteryPercentage)%")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(TFWidgetColors.black)
                     .frame(width: 44, alignment: .trailing)
@@ -669,23 +692,27 @@ struct RecentProgressWidgetContent: View {
 }
 
 struct DailyChallengeWidgetContent: View {
+    @Environment(SwiftDataVM.self) private var dataVM
+
+    private let days = ["M", "T", "W", "T", "F", "S", "S"]
+
     var body: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
-                ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { index, day in
-                    let isOn = index <= 2
+                ForEach(Array(days.enumerated()), id: \.offset) { index, day in
+                    let practiced = dataVM.practicedDaysThisWeek().contains(index)
                     VStack(spacing: 6) {
                         ZStack {
                             Circle()
-                                .fill(isOn ? TFWidgetColors.paleGreen : TFWidgetColors.badgeLockedBg)
+                                .fill(practiced ? TFWidgetColors.paleGreen : TFWidgetColors.badgeLockedBg)
                                 .overlay(
                                     Circle()
-                                        .stroke(isOn ? TFWidgetColors.green : TFWidgetColors.gray, lineWidth: 1.2)
+                                        .stroke(practiced ? TFWidgetColors.green : TFWidgetColors.gray, lineWidth: 1.2)
                                 )
                                 .frame(width: 34, height: 34)
                             Image(systemName: "trophy.fill")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(isOn ? TFWidgetColors.green : TFWidgetColors.gray)
+                                .foregroundStyle(practiced ? TFWidgetColors.green : TFWidgetColors.gray)
                         }
                         Text(day)
                             .font(.system(size: 12, weight: .medium))
@@ -759,19 +786,30 @@ struct MasteryBadgeItem: View {
 }
 
 struct WeeklyActivityWidgetContent: View {
+    @Environment(SwiftDataVM.self) private var dataVM
+
     var body: some View {
-        WeeklyActivityChartView()
+        WeeklyActivityChartView(minutes: dataVM.weeklyAttemptCounts())
     }
 }
 
 struct AccuracyWidgetContent: View {
+    @Environment(SwiftDataVM.self) private var dataVM
+
+    private var rows: [(label: String, percentage: Int)] {
+        let stats = dataVM.accuracyByCategory()
+        if stats.isEmpty {
+            return [(label: "No data yet", percentage: 0)]
+        }
+        return stats.map { ($0.category.displayName, $0.percentage) }
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             VStack(spacing: 12) {
-                AccuracyRow(label: "Alphabet", percentage: 85)
-                AccuracyRow(label: "Numbers", percentage: 93)
-                AccuracyRow(label: "Greetings", percentage: 76)
-                AccuracyRow(label: "Food", percentage: 66)
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    AccuracyRow(label: row.label, percentage: row.percentage)
+                }
             }
             
             HStack(alignment: .center) {
@@ -835,8 +873,12 @@ struct AccuracyRow: View {
 
 private struct WeeklyActivityChartView: View {
     private let days = ["M", "T", "W", "T", "F", "S", "S"]
-    private let minutes = [35, 30, 10, 52, 35, 12, 30]
+    let minutes: [Int]
     private let yTicks = [60, 45, 30, 15, 0]
+
+    private var maxValue: Int {
+        max(minutes.max() ?? 0, 1)
+    }
     
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -846,7 +888,7 @@ private struct WeeklyActivityChartView: View {
                     .foregroundStyle(TFWidgetColors.textMuted)
                     .rotationEffect(.degrees(-90))
                     .fixedSize()
-                Text("(minutes)")
+                Text("(attempts)")
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(TFWidgetColors.textMuted)
                     .rotationEffect(.degrees(-90))
@@ -893,8 +935,8 @@ private struct WeeklyActivityChartView: View {
                     
                     HStack(alignment: .bottom, spacing: 8) {
                         ForEach(days.indices, id: \.self) { index in
-                            let value = minutes[index]
-                            let barH = max(6, chartInnerHeight * CGFloat(value) / 60)
+                            let value = index < minutes.count ? minutes[index] : 0
+                            let barH = max(6, chartInnerHeight * CGFloat(value) / CGFloat(max(maxValue, yTicks.first ?? 1)))
                             
                             VStack(spacing: 8) {
                                 Spacer(minLength: 0)
@@ -1027,7 +1069,7 @@ struct AddWidgetCardView: View {
 
 struct WeeklyActivityPreview: View {
     var body: some View {
-        WeeklyActivityChartView()
+        WeeklyActivityChartView(minutes: [35, 30, 10, 52, 35, 12, 30])
     }
 }
 
