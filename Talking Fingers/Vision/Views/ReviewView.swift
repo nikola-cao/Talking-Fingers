@@ -4,11 +4,16 @@
 //
 //  Created by Hawthorne Brown on 4/14/26.
 //
-#if os(iOS)
+
 import SwiftUI
 import AVFoundation
 import Vision
+#if os(macOS)
+import AVKit
+#endif
 
+/// Record-then-replay flow: capture a sign take (with countdown and
+/// auto-stop when hands leave the frame) and immediately review it.
 struct ReviewView: View {
     let signName: String
 
@@ -16,8 +21,7 @@ struct ReviewView: View {
         self.signName = signName
     }
 
-    @State private var cameraVM: CameraVM = CameraVM()
-    @State private var hands: [VNHumanHandPoseObservation] = []
+    @State private var cameraVM = CameraVM()
 
     @State private var countdown: Int = 0
     @State private var countdownTask: Task<Void, Never>?
@@ -29,6 +33,7 @@ struct ReviewView: View {
     @State private var createdTake: RecordedSignTake?
     @State private var showPlayback = false
 
+    #if os(iOS)
     var body: some View {
         NavigationStack {
             ZStack {
@@ -48,43 +53,21 @@ struct ReviewView: View {
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
 
-                    Text("\(countdown)")
-                        .font(.jakarta(size: 120, weight: .bold))
-                        .foregroundStyle(.white)
-                        .shadow(color: .black.opacity(0.5), radius: 8, y: 4)
+                    countdownText
                 }
 
                 VStack {
                     Spacer()
 
-                    Button(action: toggleRecording) {
-                        Image(systemName: cameraVM.isRecording ? "stop.circle.fill" : "record.circle")
-                            .symbolRenderingMode(.palette)
-                            .foregroundStyle(.red, .white)
-                            .font(.jakarta(size: 72))
-                    }
-                    .disabled(countdown > 0 || signName.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .padding(.bottom, 40)
+                    recordButton
+                        .padding(.bottom, 40)
                 }
             }
             .navigationTitle("Review")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 cameraVM.checkPermission()
-
-                cameraVM.onPoseDetected = { handObservations, pts in
-                    hands = handObservations
-
-                    guard cameraVM.isRecording else { return }
-
-                    if !handObservations.isEmpty {
-                        handsLastSeenDate = Date()
-                        handsLastSeenPTS = pts
-                    } else if let lastSeen = handsLastSeenDate,
-                              Date().timeIntervalSince(lastSeen) >= autoStopGracePeriod {
-                        toggleRecording()
-                    }
-                }
+                configurePoseCallback()
             }
             .task {
                 try? await Task.sleep(for: .milliseconds(300))
@@ -98,6 +81,111 @@ struct ReviewView: View {
                 if let take = createdTake {
                     RecordedSignPlaybackView(take: take)
                 }
+            }
+        }
+    }
+    #else
+    var body: some View {
+        ZStack {
+            Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Review")
+                            .font(.jakarta(size: 28, weight: .semibold))
+                        Text("Record and instantly replay a sign take")
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 20)
+
+                if cameraVM.isAuthorized {
+                    ZStack {
+                        CameraPreviewView(session: cameraVM.session, isMirrored: cameraVM.isMirrored)
+
+                        if countdown > 0 {
+                            Color.black.opacity(0.35)
+                                .allowsHitTesting(false)
+
+                            countdownText
+                        }
+                    }
+                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
+                    .frame(maxWidth: 1100)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .stroke(.white.opacity(0.10), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.18), radius: 18, x: 0, y: 8)
+                    .padding(.horizontal, 28)
+                } else {
+                    ContentUnavailableView(
+                        "Camera Access Required",
+                        systemImage: "camera.fill",
+                        description: Text("Please allow camera access in System Settings to use review capture.")
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+
+                recordButton
+                    .buttonStyle(.plain)
+                    .padding(.bottom, 24)
+            }
+        }
+        .onAppear {
+            cameraVM.isMirrored = true
+            cameraVM.checkPermission()
+            configurePoseCallback()
+        }
+        .task {
+            try? await Task.sleep(for: .milliseconds(300))
+            cameraVM.start()
+        }
+        .onDisappear {
+            countdownTask?.cancel()
+            cameraVM.stop()
+        }
+        .navigationDestination(isPresented: $showPlayback) {
+            if let take = createdTake {
+                ReviewPlaybackView(take: take)
+            }
+        }
+    }
+    #endif
+
+    private var countdownText: some View {
+        Text("\(countdown)")
+            .font(.jakarta(size: 120, weight: .bold))
+            .foregroundStyle(.white)
+            .shadow(color: .black.opacity(0.5), radius: 8, y: 4)
+    }
+
+    private var recordButton: some View {
+        Button(action: toggleRecording) {
+            Image(systemName: cameraVM.isRecording ? "stop.circle.fill" : "record.circle")
+                .symbolRenderingMode(.palette)
+                .foregroundStyle(.red, .white)
+                .font(.jakarta(size: 72))
+        }
+        .disabled(countdown > 0 || signName.trimmingCharacters(in: .whitespaces).isEmpty)
+    }
+
+    private func configurePoseCallback() {
+        cameraVM.onPoseDetected = { handObservations, pts in
+            guard cameraVM.isRecording else { return }
+
+            if !handObservations.isEmpty {
+                handsLastSeenDate = Date()
+                handsLastSeenPTS = pts
+            } else if let lastSeen = handsLastSeenDate,
+                      Date().timeIntervalSince(lastSeen) >= autoStopGracePeriod {
+                toggleRecording()
             }
         }
     }
@@ -131,7 +219,6 @@ struct ReviewView: View {
 
                 let baseName = cameraVM.currentRecordingBaseName ?? cameraVM.makeRecordingBaseName(forSign: normalizedName)
                 let jsonURL = try cameraVM.saveRecordingFramesToJSON(playbackFrames, baseName: baseName)
-                
                 let decodedFrames = try cameraVM.loadRecordingFramesFromJSON(url: jsonURL)
 
                 let videoURL = jsonURL.deletingPathExtension().appendingPathExtension("mov")
@@ -188,7 +275,65 @@ struct ReviewView: View {
     }
 }
 
-#Preview {
-    ReviewView(signName: "hello")
+#if os(macOS)
+private struct ReviewPlaybackView: View {
+    let take: RecordedSignTake
+    @State private var player: AVPlayer?
+
+    var body: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(.black)
+
+                if let player {
+                    VideoPlayer(player: player)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                } else {
+                    ContentUnavailableView(
+                        "No Recorded Video",
+                        systemImage: "video.slash",
+                        description: Text("Could not find a video file for this take.")
+                    )
+                }
+            }
+            .aspectRatio(16.0 / 9.0, contentMode: .fit)
+            .frame(maxWidth: 1100)
+            .frame(maxWidth: .infinity)
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(.white.opacity(0.12), lineWidth: 1)
+            )
+            .padding(.horizontal, 28)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(take.signName.capitalized)
+                        .font(.jakartaHeadline)
+                    Text(take.displayFileName)
+                        .font(.jakartaSubheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 28)
+            .padding(.bottom, 18)
+        }
+        .navigationTitle(take.signName.capitalized)
+        .task {
+            guard let videoURL = take.videoURL else { return }
+            player = AVPlayer(url: videoURL)
+            player?.play()
+        }
+        .onDisappear {
+            player?.pause()
+        }
+    }
 }
 #endif
+
+#Preview {
+    NavigationStack {
+        ReviewView(signName: "hello")
+    }
+}
