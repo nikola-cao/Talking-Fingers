@@ -15,13 +15,6 @@ enum CameraMode: String, CaseIterable {
 
 #if os(iOS)
 struct SigningPracticeView: View {
-    @Environment(\.dismiss) var dismiss
-    @State var passed: Bool = false
-    // Example sentence
-    
-    @State private var currentWordIndex: Int = 0
-    @State var pass: Bool = false
-    @State private var showJointsSheet: Bool = false
     @State private var cameraVM: CameraVM
     /// When `true` the view manages the camera's `start`/`stop` lifecycle in
     /// `.onAppear`/`.onDisappear`. When an external VM is passed in, the parent
@@ -78,16 +71,6 @@ struct SigningPracticeView: View {
         _cameraVM = State(initialValue: externalCameraVM ?? CameraVM())
         self.ownsCameraLifecycle = externalCameraVM == nil
     }
-    @State private var cameraMode: CameraMode = .compare
-
-    @State private var countdown: Int = 0
-    @State private var countdownTask: Task<Void, Never>?
-
-    /// Tracks when both hands were last visible during a recording.
-    /// `nil` means hands haven't appeared yet this recording session.
-    @State private var handsLastSeenDate: Date?
-    @State private var handsLastSeenPTS: CMTime?
-    private let autoStopGracePeriod: TimeInterval = 1.5
 
     // Store all hand joint connections for drawing lines
     let handConnections: [(VNHumanHandPoseObservation.JointName, VNHumanHandPoseObservation.JointName)] = [
@@ -167,10 +150,8 @@ struct SigningPracticeView: View {
             cameraVM.userHandedness = authVM.effectiveHandedness
             cameraVM.checkPermission()
 
-            cameraVM.onPoseDetected = { handObservations, pts in
+            cameraVM.onPoseDetected = { handObservations, _ in
                 hands = handObservations
-
-                guard cameraVM.isRecording else { return }
             }
 
             cameraVM.onBodyPoseDetected = { bodyObservations, _ in
@@ -188,26 +169,15 @@ struct SigningPracticeView: View {
         .onDisappear {
             cameraVM.stop()
         }
-        .onChange(of: cameraMode) { _, newValue in
-            if newValue == .compare {
-                cameraVM.startComparing(forSign: signName ?? "")
-            } else {
-                cameraVM.stopComparing()
-            }
-        }
         .onChange(of: cameraVM.confidenceScore) { _, newValue in
-                let goodThreshold: Double = cameraVM.activeComparisonType == .static ? 62 : 50
+            let goodThreshold: Double = cameraVM.activeComparisonType == .static ? 62 : 50
             if cameraVM.confidenceScore >= goodThreshold {
                 onConfidenceChange?(newValue)
-                pass = true
             }
         }
         .onChange(of: signName ?? "") { _, newValue in
             print("Current word is \(newValue)")
-            if cameraMode == .compare {
-                cameraVM.startComparing(forSign: newValue)
-                pass = false
-            }
+            cameraVM.startComparing(forSign: newValue)
         }
         .navigationBarBackButtonHidden(true)
     }
