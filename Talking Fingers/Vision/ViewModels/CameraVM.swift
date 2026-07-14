@@ -8,9 +8,6 @@
 import AVFoundation
 import Vision
 import Foundation
-#if os(iOS)
-import CoreMotion
-#endif
 import CoreGraphics
 
 @Observable
@@ -19,10 +16,7 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     let session = AVCaptureSession() // connects camera hardware to the app
     private let videoOutput = AVCaptureVideoDataOutput() // buffers video frames for the vision intelligence to use
     private let sessionQueue = DispatchQueue(label: "camera.session.queue") // run the camera on a background thread so it doesn't freeze UI
-    
-    // Keep track of normalized hand observations
-    var normalizedHands: [NormalizedHandModel] = []
-    
+
     // --- Recording Logic ---
     var isRecording = false
     private(set) var recordedFrames: [SignFrame] = []
@@ -59,12 +53,9 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     // MARK: - Sign recognition
     var frameBuffer: SignReference = SignReference()
     private let dtwEngine = DTWService()
-    var lastScore = 30.0
     private var frameCounter = 0
-    private let stride = 8 // Run DTW every 4th frame
-    private let maxBufferSize = 65 // ~3 seconds of
-    private var currentSignReference: SignReference?
-    private var currentSignFrame: SignFrame?
+    private let stride = 8 // Run DTW every 8th frame
+    private let maxBufferSize = 65 // ~3 seconds of frames
 
     // MARK: - Comparison mode
     var isComparing = false
@@ -92,17 +83,11 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     private let smoothingFactor: Double = 0.3
     private var currentComparisonSignName: String?
 
-    #if os(iOS)
-    private let motionManager = CMMotionManager()
-    #endif
-
     // Scoring is now aspect-ratio aware (see scoreMatchedPairs), so the same
     // tunings work on iOS and macOS without padding macOS with extra slack.
     private let staticScoreDecay: Double = 3.0
     private let smoothingAlpha: Double = 0.3
 
-    var currentPitch: Double = 0.0
-    
     override init() {
         super.init()
     }
@@ -165,7 +150,6 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
     func start() {
-        self.startMotionUpdates()
         sessionQueue.async {
             guard self.isAuthorized else { return }
             
@@ -180,33 +164,11 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
     }
 
     func stop() {
-        self.stopMotionUpdates()
         sessionQueue.async {
             if self.session.isRunning {
                 self.session.stopRunning()
             }
         }
-    }
-    
-    func startMotionUpdates() {
-        #if os(iOS)
-        guard motionManager.isDeviceMotionAvailable else { return }
-        
-        motionManager.deviceMotionUpdateInterval = 1.0 / 24.0 // Match your camera FPS
-        motionManager.startDeviceMotionUpdates(to: .main) { [weak self] motion, error in
-            guard let motion = motion else { return }
-            self?.currentPitch = motion.attitude.pitch
-        }
-        #else
-        // macOS: No motion tracking available
-        currentPitch = 0.0
-        #endif
-    }
-
-    func stopMotionUpdates() {
-        #if os(iOS)
-        motionManager.stopDeviceMotionUpdates()
-        #endif
     }
 
     func toggleRecording() {
@@ -511,13 +473,7 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
                     self.onPoseDetected?(handObservations, pts)
                     self.onBodyPoseDetected?(bodyObservations, pts)
 
-                    // Do something with score
-                    self.processFrame(body: primaryBody, hands: handObservations, pitch: self.currentPitch, timestamp: pts)
-
-                    // Existing pitch-correction normalization (this is not the scale-invariance unit-box normalization)
-                    self.normalizedHands = handObservations.compactMap {
-                        NormalizedHandModel(from: $0, pitch: self.currentPitch - (.pi / 2))
-                    }
+                    self.processFrame(body: primaryBody, hands: handObservations, timestamp: pts)
 
                     if self.isRecording, let start = self.recordingStartTime {
                         let relativeTimestamp = pts - start
@@ -537,61 +493,33 @@ class CameraVM: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         }
     }
     
-    func createSignFrame(body: VNHumanBodyPoseObservation?, hands: [VNHumanHandPoseObservation], at timestamp: CMTime) -> SignFrame {
-        let current = SignFrame(
-            body: body,
-            hands: hands,
-            at: timestamp
-        )
-        
-        currentSignFrame = current
-        return current
-    }
-    
     // MARK: - Processing Frames
-    func processFrame(body: VNHumanBodyPoseObservation?, hands: [VNHumanHandPoseObservation], pitch: Double, timestamp: CMTime) {
+    func processFrame(body: VNHumanBodyPoseObservation?, hands: [VNHumanHandPoseObservation], timestamp: CMTime) {
+        guard isComparing, let ref = comparisonReference else { return }
 
-        let currentFrame = createSignFrame(body: body, hands: hands, at: timestamp)
+        let currentFrame = SignFrame(body: body, hands: hands, at: timestamp)
 
-        if isComparing, let ref = comparisonReference {
-            if ref.signType == .static, let refFrame = ref.frames.first {
-                let rawScore = compareStaticFrames(live: currentFrame, reference: refFrame)
-                smoothedConfidence = smoothedConfidence * (1 - smoothingAlpha) + rawScore * smoothingAlpha
-                confidenceScore = smoothedConfidence
-                return
-            }
-
-            if ref.signType == .dynamic {
-                frameBuffer.frames.append(currentFrame)
-                if frameBuffer.frames.count > maxBufferSize {
-                    frameBuffer.frames.removeFirst()
-                }
-
-                frameCounter += 1
-                guard frameCounter % stride == 0 else { return }
-
-                let dtwScore = dtwEngine.computeDTW(buffer: frameBuffer, template: ref)
-                let rawScore = dtwScore.isFinite ? max(0, min(100, 100.0 * exp(-3.0 * dtwScore))) : 0
-                smoothedConfidence = smoothedConfidence * (1 - smoothingFactor) + rawScore * smoothingFactor
-                confidenceScore = smoothedConfidence
-                return
-            }
+        if ref.signType == .static, let refFrame = ref.frames.first {
+            let rawScore = compareStaticFrames(live: currentFrame, reference: refFrame)
+            smoothedConfidence = smoothedConfidence * (1 - smoothingAlpha) + rawScore * smoothingAlpha
+            confidenceScore = smoothedConfidence
+            return
         }
 
-        self.frameBuffer.frames.append(currentFrame)
-        if self.frameBuffer.frames.count > maxBufferSize {
-            self.frameBuffer.frames.removeFirst()
+        if ref.signType == .dynamic {
+            frameBuffer.frames.append(currentFrame)
+            if frameBuffer.frames.count > maxBufferSize {
+                frameBuffer.frames.removeFirst()
+            }
+
+            frameCounter += 1
+            guard frameCounter % stride == 0 else { return }
+
+            let dtwScore = dtwEngine.computeDTW(buffer: frameBuffer, template: ref)
+            let rawScore = dtwScore.isFinite ? max(0, min(100, 100.0 * exp(-3.0 * dtwScore))) : 0
+            smoothedConfidence = smoothedConfidence * (1 - smoothingFactor) + rawScore * smoothingFactor
+            confidenceScore = smoothedConfidence
         }
-
-        self.frameCounter += 1
-        guard self.frameCounter % stride == 0 else { return }
-
-        let score = dtwEngine.computeDTW(
-            buffer: frameBuffer,
-            template: currentSignReference ?? SignReference()
-        )
-
-        lastScore = score
     }
 
     func convertVisionPointToScreenPosition(visionPoint: CGPoint, viewSize: CGSize) -> CGPoint {
