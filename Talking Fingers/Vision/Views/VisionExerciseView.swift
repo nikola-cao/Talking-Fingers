@@ -372,69 +372,6 @@ struct SigningCameraCard: View {
     }
 }
 
-// MARK: - Stuck Popup
-
-private struct StuckPopUpComponent: View {
-    let onKeepTrying: () -> Void
-    let onNextWord: () -> Void
-
-    private let tfGreen = Color(red: 159/255, green: 192/255, blue: 122/255)
-
-    var body: some View {
-        VStack(spacing: 20) {
-
-            Text("Stuck?")
-                .font(.jakarta(size: 28, weight: .bold))
-                .foregroundColor(Color(red: 0.93, green: 0.78, blue: 0.50))
-                .padding(.top, 8)
-
-            Text("Would you like to move on?")
-                .font(.jakarta(size: 20, weight: .medium))
-                .foregroundColor(.black.opacity(0.8))
-                .multilineTextAlignment(.center)
-
-            HStack(spacing: 12) {
-                Button(action: onKeepTrying) {
-                    Text("Keep Trying")
-                        .font(.jakarta(size: 16, weight: .semibold))
-                        .foregroundColor(.black)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.gray.opacity(0.45), lineWidth: 1.5)
-                                )
-                        )
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onNextWord) {
-                    Text("Next Word")
-                        .font(.jakarta(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(tfGreen)
-                        )
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.bottom, 4)
-        }
-        .padding(28)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 24))
-        .shadow(color: .black.opacity(0.15), radius: 20)
-        .padding(.horizontal, 24)
-        .padding(.bottom, 16)
-    }
-}
-
 // MARK: - Preview
 
 #Preview("Vision Exercise") {

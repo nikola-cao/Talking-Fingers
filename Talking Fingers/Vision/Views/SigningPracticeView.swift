@@ -389,59 +389,6 @@ struct SigningPracticeView: View {
 #Preview {
     //SigningPracticeView()
 }
-
-
-struct ProgressBar: View {
-    let total: Int
-    let current: Int
-    var body: some View {
-        // let width: CGFloat = 364
-        let height: CGFloat = 12
-        let progress = max(0, min(1, Double(current + 1) / Double(total)))
-        HStack(alignment: .center, spacing: 12) {
-            GeometryReader { proxy in
-                let availableWidth = proxy.size.width
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: height/2, style: .continuous)
-                        .fill(.quaternary)
-                        .frame(height: height)
-                    RoundedRectangle(cornerRadius: height/2, style: .continuous)
-                        .fill(Color.accentColor)
-                        .frame(width: max(0, availableWidth * progress), height: height)
-                }
-            }
-            .frame(height: height)
-
-            Button(action: {
-                print("something")
-            }) {
-                Image(systemName: "line.3.horizontal")
-                    .foregroundStyle(Color.black)
-            }
-        }
-    }
-}
-
-//
-//  CameraView.swift
-//  Talking Fingers
-//
-//  Created by Jihoon Kim on 1/29/26.
-//
-import SwiftUI
-import AVFoundation
-import Vision
-
-private struct CameraAspectModifier: ViewModifier {
-    let usesAspectRatio: Bool
-    func body(content: Content) -> some View {
-        if usesAspectRatio {
-            content.aspectRatio(9.0 / 16.0, contentMode: .fit)
-        } else {
-            content
-        }
-    }
-}
 #endif
 
 #if os(macOS)
@@ -790,17 +737,6 @@ struct SigningPracticeView: View {
         if score >= goodThreshold { return "Good" }
         if score >= okayThreshold { return "Okay" }
         return "Bad"
-    }
-}
-
-private struct CameraAspectModifierMacOS: ViewModifier {
-    let usesAspectRatio: Bool
-    func body(content: Content) -> some View {
-        if usesAspectRatio {
-            content.aspectRatio(16.0 / 9.0, contentMode: .fit)
-        } else {
-            content
-        }
     }
 }
 #endif
