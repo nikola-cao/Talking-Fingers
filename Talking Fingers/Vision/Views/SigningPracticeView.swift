@@ -7,12 +7,6 @@ import SwiftUI
 import AVFoundation
 import Vision
 
-enum CameraMode: String, CaseIterable {
-    case `static`
-    case dynamic
-    case compare
-}
-
 #if os(iOS)
 struct SigningPracticeView: View {
     @State private var cameraVM: CameraVM
@@ -72,38 +66,6 @@ struct SigningPracticeView: View {
         self.ownsCameraLifecycle = externalCameraVM == nil
     }
 
-    // Store all hand joint connections for drawing lines
-    let handConnections: [(VNHumanHandPoseObservation.JointName, VNHumanHandPoseObservation.JointName)] = [
-        // Thumb
-        (.wrist, .thumbCMC), (.thumbCMC, .thumbMP), (.thumbMP, .thumbIP), (.thumbIP, .thumbTip),
-        // Index
-        (.wrist, .indexMCP), (.indexMCP, .indexPIP), (.indexPIP, .indexDIP), (.indexDIP, .indexTip),
-        // Middle
-        (.wrist, .middleMCP), (.middleMCP, .middlePIP), (.middlePIP, .middleDIP), (.middleDIP, .middleTip),
-        // Ring
-        (.wrist, .ringMCP), (.ringMCP, .ringPIP), (.ringPIP, .ringDIP), (.ringDIP, .ringTip),
-        // Little
-        (.wrist, .littleMCP), (.littleMCP, .littlePIP), (.littlePIP, .littleDIP), (.littleDIP, .littleTip)
-    ]
-
-    // Store body joint connections for upper body (shoulders to elbows only)
-    let bodyConnections: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)] = [
-        (.leftShoulder, .leftElbow),
-        (.rightShoulder, .rightElbow)
-    ]
-
-    // Store points to create polygon for hand (edges)
-    let perimeterJoints: [VNHumanHandPoseObservation.JointName] = [
-        .wrist,
-        .thumbCMC, .thumbMP, .thumbIP, .thumbTip,
-        .indexTip,
-        .middleTip,
-        .ringTip,
-        .littleTip,
-        .littleDIP, .littlePIP, .littleMCP,
-        .wrist
-    ]
-
     var body: some View {
         Group {
             if cameraVM.isAuthorized {
@@ -111,11 +73,19 @@ struct SigningPracticeView: View {
                     CameraPreviewView(session: cameraVM.session)
                         .ignoresSafeArea()
                     GeometryReader { geo in
-                        handOutlineOverlay(in: geo.size)
-                        handJointLabelsOverlay(in: geo.size)
-                        bodyJointLabelsOverlay(in: geo.size)
-                        handSkeletonOverlay(in: geo.size)
-                        bodySkeletonOverlay(in: geo.size)
+                        PoseOverlaysView(
+                            hands: hands,
+                            bodies: bodies,
+                            size: geo.size,
+                            cameraVM: cameraVM,
+                            jointVisibility: jointVisibility,
+                            bodyJointVisibility: bodyJointVisibility,
+                            dotsVisibility: dotsVisibility,
+                            jointNamesVisibility: jointNamesVisibility,
+                            handOutlineVisibility: handOutlineVisibility,
+                            handSkeletonVisibility: handSkeletonVisibility,
+                            bodySkeletonVisibility: bodySkeletonVisibility
+                        )
                     }
                     if signName != nil && hands.count > 0 {
                         VStack {
@@ -182,160 +152,6 @@ struct SigningPracticeView: View {
         .navigationBarBackButtonHidden(true)
     }
     
-    @ViewBuilder
-    private func handOutlineOverlay(in size: CGSize) -> some View {
-        if handOutlineVisibility {
-            ForEach(hands, id: \.uuid) { hand in
-                let points = perimeterJoints.compactMap { jointName -> CGPoint? in
-                    guard let point = try? hand.recognizedPoint(jointName),
-                          point.confidence > 0.5 else { return nil }
-                    return cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-                }
-                if points.count > 3 {
-                    Path { path in
-                        path.addLines(points)
-                        path.closeSubpath()
-                    }
-                    .fill(Color.green.opacity(0.3))
-                    .stroke(Color.green, lineWidth: 2)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func handJointLabelsOverlay(in size: CGSize) -> some View {
-        ForEach(hands, id: \.uuid) { hand in
-            let visibleJoints = JointsSheetView.handJointLabels.filter { jointVisibility[$0.name] == true }
-            ForEach(visibleJoints, id: \.name) { joint in
-                if let point = try? hand.recognizedPoint(joint.name), point.confidence > 0.5 {
-                    let pos = cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-
-                    let handSide = (cameraVM.isMirrored
-                                    ? (hand.chirality == .left ? "R" : "L")
-                                    : (hand.chirality == .left ? "L" : "R"))
-
-                    ZStack {
-                        if jointNamesVisibility {
-                            Text("\(handSide) \(joint.label)")
-                                .font(.jakartaCaption2)
-                                .padding(4)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .position(pos)
-                        }
-
-                        if dotsVisibility {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 7, height: 7)
-                                .position(pos)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func bodyJointLabelsOverlay(in size: CGSize) -> some View {
-        ForEach(bodies, id: \.uuid) { body in
-            let visibleBodyJoints = JointsSheetView.bodyJointLabels.filter { bodyJointVisibility[$0.name] == true }
-            ForEach(visibleBodyJoints, id: \.name) { joint in
-                if let point = try? body.recognizedPoint(joint.name), point.confidence > 0.3 {
-                    let pos = cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-                    ZStack {
-                        if jointNamesVisibility {
-                            Text(joint.label)
-                                .font(.jakartaCaption2)
-                                .padding(4)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .position(pos)
-                        }
-
-                        if dotsVisibility {
-                            Circle()
-                                .fill(Color.orange)
-                                .frame(width: 8, height: 8)
-                                .position(pos)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func handSkeletonOverlay(in size: CGSize) -> some View {
-        if handSkeletonVisibility {
-            ForEach(hands, id: \.uuid) { hand in
-                let handSkeletonColor = (cameraVM.isMirrored
-                                         ? (hand.chirality == .left ? Color.purple : Color.blue)
-                                         : (hand.chirality == .left ? Color.blue : Color.purple))
-
-                Path { path in
-                    for connection in handConnections {
-                        if let p1 = try? hand.recognizedPoint(connection.0),
-                           let p2 = try? hand.recognizedPoint(connection.1),
-                           p1.confidence > 0.5, p2.confidence > 0.5,
-                           jointVisibility[connection.0] == true,
-                           jointVisibility[connection.1] == true {
-
-                            let start = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p1.location,
-                                viewSize: size
-                            )
-                            let end = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p2.location,
-                                viewSize: size
-                            )
-                            path.move(to: start)
-                            path.addLine(to: end)
-                        }
-                    }
-                }
-                .stroke(handSkeletonColor.opacity(0.6), lineWidth: 3)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func bodySkeletonOverlay(in size: CGSize) -> some View {
-        if bodySkeletonVisibility {
-            ForEach(bodies, id: \.uuid) { body in
-                Path { path in
-                    for connection in bodyConnections {
-                        if let p1 = try? body.recognizedPoint(connection.0),
-                           let p2 = try? body.recognizedPoint(connection.1),
-                           p1.confidence > 0.3, p2.confidence > 0.3,
-                           bodyJointVisibility[connection.0] == true,
-                           bodyJointVisibility[connection.1] == true {
-
-                            let start = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p1.location,
-                                viewSize: size
-                            )
-                            let end = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p2.location,
-                                viewSize: size
-                            )
-                            path.move(to: start)
-                            path.addLine(to: end)
-                        }
-                    }
-                }
-                .stroke(Color.orange.opacity(0.7), lineWidth: 4)
-            }
-        }
-    }
 
     private var confidenceColor: Color {
         let score = cameraVM.confidenceScore
@@ -421,30 +237,6 @@ struct SigningPracticeView: View {
     @State private var handSkeletonVisibility: Bool = true
     @State private var bodySkeletonVisibility: Bool = true
 
-    let handConnections: [(VNHumanHandPoseObservation.JointName, VNHumanHandPoseObservation.JointName)] = [
-        (.wrist, .thumbCMC), (.thumbCMC, .thumbMP), (.thumbMP, .thumbIP), (.thumbIP, .thumbTip),
-        (.wrist, .indexMCP), (.indexMCP, .indexPIP), (.indexPIP, .indexDIP), (.indexDIP, .indexTip),
-        (.wrist, .middleMCP), (.middleMCP, .middlePIP), (.middlePIP, .middleDIP), (.middleDIP, .middleTip),
-        (.wrist, .ringMCP), (.ringMCP, .ringPIP), (.ringPIP, .ringDIP), (.ringDIP, .ringTip),
-        (.wrist, .littleMCP), (.littleMCP, .littlePIP), (.littlePIP, .littleDIP), (.littleDIP, .littleTip)
-    ]
-
-    let bodyConnections: [(VNHumanBodyPoseObservation.JointName, VNHumanBodyPoseObservation.JointName)] = [
-        (.leftShoulder, .leftElbow),
-        (.rightShoulder, .rightElbow)
-    ]
-
-    let perimeterJoints: [VNHumanHandPoseObservation.JointName] = [
-        .wrist,
-        .thumbCMC, .thumbMP, .thumbIP, .thumbTip,
-        .indexTip,
-        .middleTip,
-        .ringTip,
-        .littleTip,
-        .littleDIP, .littlePIP, .littleMCP,
-        .wrist
-    ]
-
     var body: some View {
         Group {
             if cameraVM.isAuthorized {
@@ -456,11 +248,19 @@ struct SigningPracticeView: View {
                     .ignoresSafeArea()
 
                     GeometryReader { geo in
-                        handOutlineOverlay(in: geo.size)
-                        handJointLabelsOverlay(in: geo.size)
-                        bodyJointLabelsOverlay(in: geo.size)
-                        handSkeletonOverlay(in: geo.size)
-                        bodySkeletonOverlay(in: geo.size)
+                        PoseOverlaysView(
+                            hands: hands,
+                            bodies: bodies,
+                            size: geo.size,
+                            cameraVM: cameraVM,
+                            jointVisibility: jointVisibility,
+                            bodyJointVisibility: bodyJointVisibility,
+                            dotsVisibility: dotsVisibility,
+                            jointNamesVisibility: jointNamesVisibility,
+                            handOutlineVisibility: handOutlineVisibility,
+                            handSkeletonVisibility: handSkeletonVisibility,
+                            bodySkeletonVisibility: bodySkeletonVisibility
+                        )
                     }
                     if signName != nil && hands.count > 0 {
                         VStack {
@@ -537,160 +337,6 @@ struct SigningPracticeView: View {
         }
     }
 
-    @ViewBuilder
-    private func handOutlineOverlay(in size: CGSize) -> some View {
-        if handOutlineVisibility {
-            ForEach(hands, id: \.uuid) { hand in
-                let points = perimeterJoints.compactMap { jointName -> CGPoint? in
-                    guard let point = try? hand.recognizedPoint(jointName),
-                          point.confidence > 0.5 else { return nil }
-                    return cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-                }
-                if points.count > 3 {
-                    Path { path in
-                        path.addLines(points)
-                        path.closeSubpath()
-                    }
-                    .fill(Color.green.opacity(0.3))
-                    .stroke(Color.green, lineWidth: 2)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func handJointLabelsOverlay(in size: CGSize) -> some View {
-        ForEach(hands, id: \.uuid) { hand in
-            let visibleJoints = JointsSheetView.handJointLabels.filter { jointVisibility[$0.name] == true }
-            ForEach(visibleJoints, id: \.name) { joint in
-                if let point = try? hand.recognizedPoint(joint.name), point.confidence > 0.5 {
-                    let pos = cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-
-                    let handSide = (cameraVM.isMirrored
-                                    ? (hand.chirality == .left ? "R" : "L")
-                                    : (hand.chirality == .left ? "L" : "R"))
-
-                    ZStack {
-                        if jointNamesVisibility {
-                            Text("\(handSide) \(joint.label)")
-                                .font(.jakartaCaption2)
-                                .padding(4)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .position(pos)
-                        }
-
-                        if dotsVisibility {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 7, height: 7)
-                                .position(pos)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func bodyJointLabelsOverlay(in size: CGSize) -> some View {
-        ForEach(bodies, id: \.uuid) { body in
-            let visibleBodyJoints = JointsSheetView.bodyJointLabels.filter { bodyJointVisibility[$0.name] == true }
-            ForEach(visibleBodyJoints, id: \.name) { joint in
-                if let point = try? body.recognizedPoint(joint.name), point.confidence > 0.3 {
-                    let pos = cameraVM.convertVisionPointToScreenPosition(
-                        visionPoint: point.location,
-                        viewSize: size
-                    )
-                    ZStack {
-                        if jointNamesVisibility {
-                            Text(joint.label)
-                                .font(.jakartaCaption2)
-                                .padding(4)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .position(pos)
-                        }
-
-                        if dotsVisibility {
-                            Circle()
-                                .fill(Color.orange)
-                                .frame(width: 8, height: 8)
-                                .position(pos)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func handSkeletonOverlay(in size: CGSize) -> some View {
-        if handSkeletonVisibility {
-            ForEach(hands, id: \.uuid) { hand in
-                let handSkeletonColor = (cameraVM.isMirrored
-                                         ? (hand.chirality == .left ? Color.purple : Color.blue)
-                                         : (hand.chirality == .left ? Color.blue : Color.purple))
-
-                Path { path in
-                    for connection in handConnections {
-                        if let p1 = try? hand.recognizedPoint(connection.0),
-                           let p2 = try? hand.recognizedPoint(connection.1),
-                           p1.confidence > 0.5, p2.confidence > 0.5,
-                           jointVisibility[connection.0] == true,
-                           jointVisibility[connection.1] == true {
-
-                            let start = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p1.location,
-                                viewSize: size
-                            )
-                            let end = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p2.location,
-                                viewSize: size
-                            )
-                            path.move(to: start)
-                            path.addLine(to: end)
-                        }
-                    }
-                }
-                .stroke(handSkeletonColor.opacity(0.6), lineWidth: 3)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func bodySkeletonOverlay(in size: CGSize) -> some View {
-        if bodySkeletonVisibility {
-            ForEach(bodies, id: \.uuid) { body in
-                Path { path in
-                    for connection in bodyConnections {
-                        if let p1 = try? body.recognizedPoint(connection.0),
-                           let p2 = try? body.recognizedPoint(connection.1),
-                           p1.confidence > 0.3, p2.confidence > 0.3,
-                           bodyJointVisibility[connection.0] == true,
-                           bodyJointVisibility[connection.1] == true {
-
-                            let start = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p1.location,
-                                viewSize: size
-                            )
-                            let end = cameraVM.convertVisionPointToScreenPosition(
-                                visionPoint: p2.location,
-                                viewSize: size
-                            )
-                            path.move(to: start)
-                            path.addLine(to: end)
-                        }
-                    }
-                }
-                .stroke(Color.orange.opacity(0.7), lineWidth: 4)
-            }
-        }
-    }
     private var confidenceColor: Color {
         let score = cameraVM.confidenceScore
         let goodThreshold: Double = cameraVM.activeComparisonType == .static ? 62 : 50
