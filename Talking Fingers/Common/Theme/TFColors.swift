@@ -17,14 +17,11 @@ enum TFColors {
     static let white = Color(hex: 0xFFFFFF)
     static let lightBlue = Color(hex: 0xA9CEEC)
     static let trackBlue = Color(hex: 0xD9E5EF)
-    static let darkGray = Color(hex: 0x5A5A5A)
     static let darkerGray = Color(hex: 0x464646)
     static let blue = Color(hex: 0x58A0DA)
     static let border = Color(hex: 0xDDDDDD)
     static let pill = Color(hex: 0xEEEEEE)
-    static let offWhite = Color(hex: 0xF7F7F7)
     static let iconGray = Color(hex: 0x777777)
-    static let lockGray = Color(hex: 0x8B8B8B)
     static let badgeLockedBg = Color(hex: 0xEFEFEF)
 
     // Navigation

@@ -95,12 +95,7 @@ struct WidgetCardView: View {
     }
 
     private var accessoryIcon: String {
-        switch widget.type {
-        case .weeklyActivity, .accuracy, .masteryBadges:
-            return "chevron.right"
-        default:
-            return "chevron.right"
-        }
+        "chevron.right"
     }
 
     private var widgetTitle: String {

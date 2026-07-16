@@ -27,16 +27,6 @@ extension View {
         #endif
     }
     
-    /// Helper to apply padding or frames specifically for the Mac
-    @ViewBuilder
-    func macOnly(padding: CGFloat) -> some View {
-        #if os(macOS)
-        self.padding(padding)
-        #else
-        self
-        #endif
-    }
-
     /// Helper to apply horizontal padding only on iOS; no-op on macOS.
     @ViewBuilder
     func iosOnly(horizontalPadding: CGFloat) -> some View {
@@ -83,46 +73,9 @@ extension View {
 
 #if canImport(UIKit)
 import UIKit
-typealias PlatformImage = UIImage
-typealias PlatformColor = UIColor
 #elseif canImport(AppKit)
 import AppKit
-typealias PlatformImage = NSImage
-typealias PlatformColor = NSColor
 #endif
-
-func loadImage(baseName: String, ext: String) -> PlatformImage? {
-    guard let url = Bundle.main.url(forResource: baseName, withExtension: ext) else {
-        return nil
-    }
-
-    #if canImport(UIKit)
-    return UIImage(contentsOfFile: url.path)
-    #elseif canImport(AppKit)
-    return NSImage(contentsOf: url)
-    #else
-    return nil
-    #endif
-}
-
-extension View {
-    @ViewBuilder
-    func universalImage(baseName: String, ext: String, height: CGFloat = 250) -> some View {
-            if let img = loadImage(baseName: baseName, ext: ext) {
-                #if canImport(UIKit)
-                Image(uiImage: img)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: height)
-                #elseif canImport(AppKit)
-                Image(nsImage: img)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: height)
-                #endif
-            }
-        }
-    }
 
 extension Color {
     static var categoryComponentColor: Color {
@@ -130,18 +83,6 @@ extension Color {
         Color(UIColor.systemGroupedBackground)
         #elseif canImport(AppKit)
         Color(NSColor.windowBackgroundColor)
-        #endif
-    }
-}
-
-extension Color {
-    static var tfSurface: Color {
-        #if canImport(UIKit)
-        return Color(PlatformColor.systemGray6)
-        #elseif canImport(AppKit)
-        return Color(PlatformColor.controlBackgroundColor)
-        #else
-        return Color.gray.opacity(0.12)
         #endif
     }
 }
@@ -174,7 +115,6 @@ extension Font {
     static var jakartaTitle3: Font { .jakarta(size: 20, weight: .semibold) }
     static var jakartaHeadline: Font { .jakarta(size: 17, weight: .semibold) }
     static var jakartaSubheadline: Font { .jakarta(size: 15, weight: .regular) }
-    static var jakartaBody: Font { .jakarta(size: 17, weight: .regular) }
     static var jakartaCallout: Font { .jakarta(size: 16, weight: .regular) }
     static var jakartaCaption: Font { .jakarta(size: 12, weight: .regular) }
     static var jakartaCaption2: Font { .jakarta(size: 11, weight: .regular) }

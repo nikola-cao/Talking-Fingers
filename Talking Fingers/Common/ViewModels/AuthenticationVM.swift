@@ -14,7 +14,6 @@ class AuthenticationViewModel {
     var errorMessage: String?
     var isLoading = false
     var isInitializingSession = true
-    var isLoggedIn = false
     var currentUser: User?
     var sessionHandedness: String?
     var auth: Auth
@@ -46,7 +45,6 @@ class AuthenticationViewModel {
             } else {
                 DispatchQueue.main.async {
                     self.currentUser = nil
-                    self.isLoggedIn = false
                     self.isInitializingSession = false
                     self.sessionHandedness = nil
                 }
@@ -58,10 +56,6 @@ class AuthenticationViewModel {
         if let handler = handler {
             Auth.auth().removeStateDidChangeListener(handler)
         }
-    }
-    
-    public var isSignedIn: Bool {
-        return Auth.auth().currentUser != nil
     }
     
     func login(email: String, password: String) async {
@@ -118,7 +112,6 @@ class AuthenticationViewModel {
             await MainActor.run {
                 self.currentUser = newUser
                 self.sessionHandedness = newUser.handedness
-                self.isLoggedIn = true
                 self.isLoading = false
                 self.isInitializingSession = false
             }
@@ -136,7 +129,6 @@ class AuthenticationViewModel {
             DispatchQueue.main.async {
                 self.currentUser = nil
                 self.sessionHandedness = nil
-                self.isLoggedIn = false
             }
         } catch {
             self.errorMessage = error.localizedDescription
@@ -192,7 +184,6 @@ class AuthenticationViewModel {
             DispatchQueue.main.async {
                 self.currentUser = hydratedUser
                 self.sessionHandedness = handedness
-                self.isLoggedIn = true
                 self.isLoading = false
                 self.isInitializingSession = false
                 if isLoggingIn {
@@ -211,7 +202,6 @@ class AuthenticationViewModel {
             DispatchQueue.main.async {
                 self.currentUser = fallbackUser
                 self.sessionHandedness = self.normalizeHandedness(self.sessionHandedness)
-                self.isLoggedIn = true
                 self.isLoading = false
                 self.isInitializingSession = false
                 if isLoggingIn {

@@ -35,8 +35,7 @@ struct DashboardView: View {
     @Environment(SwiftDataVM.self) private var dataVM
     @Environment(\.modelContext) private var modelContext
     @Query private var users: [User]
-    @State private var selectedTab: Int = 0
-    
+
     // Compute categories that are in progress (have at least one non-new and non-mastered card)
     private var inProgressCategories: [(category: TermCategory, progress: Float, mode: String)] {
         let grouped = Dictionary(grouping: categoryScopedCards) { $0.category }
@@ -352,9 +351,6 @@ struct DashboardView: View {
                         }
                     }
                     .ignoresSafeArea(edges: .top)
-                    
-                    // MARK: - Floating Tab Bar Overlay (disabled: non-functional duplicate tab bar)
-                    // FloatingTabBar(selectedTab: $selectedTab)
                 }
             }
             .popupHost(isPresented: $showModePopup) {
@@ -451,7 +447,7 @@ struct DashboardView: View {
                 
                 // MARK: - Welcome Header
                 HStack(spacing: 16) {
-                    Image(systemName: "DashboardWelcome")
+                    Image("DashboardWelcome")
                         .font(.jakarta(size: 45))
                         .foregroundColor(Color(red: 0.85, green: 0.8, blue: 0.3))
                     
@@ -738,63 +734,6 @@ private struct DailyChallengeCard: View {
                 .strokeBorder(Color(red: 0.963, green: 0.86, blue: 0.609), lineWidth: 2)
         )
         .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
-    }
-}
-
-// MARK: - Floating Tab Bar Components
-
-private struct FloatingTabBar: View {
-    @Binding var selectedTab: Int
-    
-    var body: some View {
-        HStack {
-            Spacer()
-            TabBarButton(icon: "house.fill", title: "Home", isSelected: selectedTab == 0) {
-                selectedTab = 0
-            }
-            Spacer()
-            TabBarButton(icon: "hand.raised.fill", title: "Practice", isSelected: selectedTab == 1) {
-                selectedTab = 1
-            }
-            Spacer()
-            TabBarButton(icon: "person.fill", title: "Profile", isSelected: selectedTab == 2) {
-                selectedTab = 2
-            }
-            Spacer()
-        }
-        .padding(.vertical, 12)
-        .background(Color.white)
-        .clipShape(Capsule())
-        .shadow(color: .black.opacity(0.08), radius: 15, x: 0, y: 5)
-        .padding(.horizontal, 30)
-        .padding(.bottom, 20)
-    }
-}
-
-private struct TabBarButton: View {
-    let icon: String
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.jakarta(size: 22))
-                Text(title)
-                    .font(.jakarta(size: 10))
-                    .fontWeight(.semibold)
-            }
-            .foregroundColor(isSelected ? Color(red: 0.30, green: 0.55, blue: 0.85) : Color.gray.opacity(0.6))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(
-                Capsule()
-                    .fill(isSelected ? Color(red: 0.30, green: 0.55, blue: 0.85).opacity(0.15) : Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
     }
 }
 

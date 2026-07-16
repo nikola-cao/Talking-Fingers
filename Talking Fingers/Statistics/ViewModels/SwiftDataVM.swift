@@ -19,10 +19,6 @@ class SwiftDataVM {
         self.modelContext = modelContext
     }
     
-    func generatePromptForLLM(from flashcards: [FlashcardModel], focusTerms: [Term] = []) -> String {
-        return PromptGenerator.generatePromptForLLM(from: flashcards, focusTerms: focusTerms)
-    }
-    
     func fetchFlashcards() -> [FlashcardModel] {
         guard let modelContext = modelContext else { return [] }
         
@@ -33,58 +29,6 @@ class SwiftDataVM {
             print("Error fetching flashcards: \(error)")
             return []
         }
-    }
-    
-    func generatePromptFromCurrentData(focusTerms: [Term] = []) -> String {
-        let flashcards = fetchFlashcards()
-        if flashcards.isEmpty { 
-            return "Error: No flashcards available to generate prompt." 
-        }
-        return generatePromptForLLM(from: flashcards, focusTerms: focusTerms)
-    }
-    
-    
-    func updateFlashcardProgress(flashcards: [FlashcardModel], scores: [Int]) {
-        guard flashcards.count == scores.count else { return }
-        
-        for index in 0..<scores.count {
-            let card = flashcards[index]
-            let previousProgress = card.progress
-            if scores[index] == 1 {
-                card.progress = previousProgress.increase()
-            } else if scores[index] == -1 {
-                card.progress = previousProgress.decrease()
-            }
-            if card.progress != previousProgress {
-                card.markProgressChanged()
-            }
-            if scores[index] != 0 {
-                recordAttempt(term: card.term, correct: scores[index] == 1)
-            }
-        }
-        try? modelContext?.save()
-        recordDailyMasterySnapshotIfNeeded()
-    }
-    // MARK: - AI Sentence Comprehension Grading
-    func gradeSentenceComprehension(correctGloss: [Term], userAnswers: [String]) -> [Int] {
-        var score: [Int] = []
-        
-        for i in 0..<correctGloss.count {
-            if i < userAnswers.count {
-                let correctWord = correctGloss[i].rawValue.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-                let userWord = userAnswers[i].trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
-                
-                if correctWord == userWord {
-                    score.append(1)
-                } else {
-                    score.append(-1)
-                }
-            } else {
-                score.append(-1)
-            }
-        }
-        
-        return score
     }
     
     // MARK: - Saved Practice Sessions
@@ -109,27 +53,6 @@ class SwiftDataVM {
             try modelContext.save()
         } catch {
             print("Error saving SwiftData context: \(error)")
-        }
-    }
-    
-    func fetchSavedPracticeSessions() -> [SavedPracticeModel] {
-        guard let modelContext = modelContext else { return [] }
-        
-        do {
-            var descriptor = FetchDescriptor<SavedPracticeModel>()
-            descriptor.sortBy = [SortDescriptor(\.date, order: .reverse)]
-            return try modelContext.fetch(descriptor)
-        } catch {
-            print("Error fetching saved practice sessions: \(error)")
-            return []
-        }
-    }
-    func getFlashcardsForGloss(_ gloss: [Term]) -> [FlashcardModel] {
-        let allFlashcards = fetchFlashcards()
-        let glossTermStrings = gloss.map { $0.rawValue }
-        
-        return glossTermStrings.compactMap { termString in
-            allFlashcards.first { $0.term.rawValue == termString }
         }
     }
     
@@ -214,17 +137,6 @@ class SwiftDataVM {
         try? modelContext.save()
     }
 
-    func updateProfile(for user: User, name: String? = nil, handedness: String? = nil) async {
-        if let name {
-            user.name = name
-        }
-        if let handedness {
-            user.handedness = handedness.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        }
-        markProfileChanged(user)
-        persistAndSyncProfile(user)
-    }
-
     func localUser(matching userId: String) -> User? {
         fetchLocalUser(userId: userId)
     }
@@ -283,15 +195,6 @@ class SwiftDataVM {
             }
         }
         return total / Float(flashcards.count)
-    }
-
-    func recentMasterySnapshots(limit: Int = 7) -> [AnalyticsModel] {
-        guard let modelContext else { return [] }
-        var descriptor = FetchDescriptor<AnalyticsModel>(
-            sortBy: [SortDescriptor(\.date, order: .reverse)]
-        )
-        descriptor.fetchLimit = limit
-        return (try? modelContext.fetch(descriptor)) ?? []
     }
 
     func weeklyAttemptCounts() -> [Int] {

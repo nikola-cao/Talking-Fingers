@@ -59,11 +59,6 @@ class ProfileWidgetsVM {
         normalizeOrders()
     }
     
-    func moveWidget(from source: IndexSet, to destination: Int) {
-        displayedWidgets.move(fromOffsets: source, toOffset: destination)
-        normalizeOrders()
-    }
-    
     func applyOrderedWidgets(_ widgets: [ProfileWidget]) {
         displayedWidgets = widgets
         normalizeOrders()
