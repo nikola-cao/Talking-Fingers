@@ -12,7 +12,7 @@ enum ActiveFlow: Identifiable {
     case learn(TermCategory)
     case exercise(TermCategory)
     case dailyChallenge
-    
+
     var id: String {
         switch self {
         case .learn(let cat): return "learn_\(cat.rawValue)"
@@ -23,91 +23,25 @@ enum ActiveFlow: Identifiable {
 }
 
 struct DashboardView: View {
-    @State private var flashcardVM = FlashcardVM()
+    @State var flashcardVM = FlashcardVM()
     @State private var currentView: String = "Home"
     @State private var showOnboarding: Bool = false
-    
+
     // for learn/exercise popup
     @State private var showModePopup: Bool = false
     @State private var selectedCategoryForPopup: TermCategory? = nil
-    
+
     @State private var activeFlow: ActiveFlow? = nil
     @Environment(SwiftDataVM.self) private var dataVM
-    @Environment(\.modelContext) private var modelContext
-    @Query private var users: [User]
+    @Environment(\.modelContext) var modelContext
+    @Query var users: [User]
 
-    // Compute categories that are in progress (have at least one non-new and non-mastered card)
-    private var inProgressCategories: [(category: TermCategory, progress: Float, mode: String)] {
-        let grouped = Dictionary(grouping: categoryScopedCards) { $0.category }
-        return grouped.compactMap { (category, cards) in
-            let progress = flashcardVM.returnProgress(flashcards: cards)
-            // Only show categories that are actually in progress (not 0% and not 100%)
-            guard progress > 0 && progress < 100 else { return nil }
-            
-            // Decide mode based on average progress
-            let mode = progress < 50 ? "Learn" : "Exercise"
-            return (category: category, progress: progress, mode: mode)
-        }
-        .sorted { $0.progress > $1.progress }
-        .prefix(2)
-        .map { $0 }
-    }
-    
-    private var allCategories: [String] {
-        TermCategory.allCases.map { $0.rawValue.capitalized }
-    }
-    
-    private var dailyQueue: DailyReviewQueue {
-        flashcardVM.generateDailyReviewQueue(limit: 5)
-    }
-    
-    // Cards successfully practiced today, capped at the daily target.
-    private var dailyChallengeCompleted: Int {
-        let completedToday = flashcardVM.flashcards.filter { card in
-            guard let last = card.lastSucceeded else { return false }
-            return Calendar.current.isDateInToday(last)
-        }.count
-        return min(completedToday, dailyQueue.requestedLimit)
-    }
-
-    private var currentStreak: Int {
-        users.first?.streakCount ?? 0
-    }
-    
-    private var categoryScopedCards: [FlashcardModel] {
-        // Guard against mismatched remote records: category views should only show
-        // cards whose term actually belongs to that category.
-        flashcardVM.flashcards.filter { $0.term.category == $0.category }
-    }
-    
-    private var foundationsCompleted: Bool {
-        isLearnCompleted(for: .alphabet) && isLearnCompleted(for: .numbers)
-    }
-    
-    private func isLearnCompleted(for category: TermCategory) -> Bool {
-        categoryScopedCards.contains { $0.category == category && $0.progress != .new }
-    }
-    
-    private func canAccessCategory(_ category: TermCategory) -> Bool {
-        if category == .alphabet || category == .numbers { return true }
-        return foundationsCompleted
-    }
-    
-    private func category(from title: String) -> TermCategory? {
-        let normalized = title.lowercased()
-        return TermCategory.allCases.first(where: { $0.rawValue.lowercased() == normalized })
-    }
-    
-    private func isExerciseUnlocked(for category: TermCategory) -> Bool {
-        isLearnCompleted(for: category)
-    }
-    
     var body: some View {
 #if os(macOS)
         // MARK: - Mac Layout
         NavigationStack {
             HStack(spacing: 0) {
-                
+
                 // MAIN CONTENT
                 Group {
                     if currentView == "Home" {
@@ -120,45 +54,14 @@ struct DashboardView: View {
             }
             .background(Color.categoryComponentColor)
             .popupHost(isPresented: $showModePopup) {
-                ModePopupView(
-                    isPresented: $showModePopup,
-                    isExerciseUnlocked: selectedCategoryForPopup.map { canAccessCategory($0) && isExerciseUnlocked(for: $0) } ?? false,
-                    onLearn: {
-                        if let cat = selectedCategoryForPopup {
-                            guard canAccessCategory(cat) else { return }
-                            activeFlow = .learn(cat)
-                        }
-                    },
-                    onExercise: {
-                        if let cat = selectedCategoryForPopup {
-                            guard canAccessCategory(cat) else { return }
-                            activeFlow = .exercise(cat)
-                        }
-                    }
-                )
+                modePopup
             }
             .overlay {
                 if let flow = activeFlow {
                     ZStack {
                         Color(NSColor.windowBackgroundColor)
                             .ignoresSafeArea()
-                        switch flow {
-                        case .learn(let category):
-                            FlexibleStartCardComponent(context: .learn(category), completed: 0, total: 12) {
-                                activeFlow = nil
-                            }
-                            .environment(dataVM)
-                        case .exercise(let category):
-                            FlexibleStartCardComponent(context: .exercise(category), completed: 0, total: 12) {
-                                activeFlow = nil
-                            }
-                            .environment(dataVM)
-                        case .dailyChallenge:
-                            FlexibleStartCardComponent(context: .dailyChallenge, completed: 0, total: 5) {
-                                activeFlow = nil
-                            }
-                            .environment(dataVM)
-                        }
+                        flowDestination(for: flow)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -174,10 +77,10 @@ struct DashboardView: View {
                 ZStack(alignment: .bottom) {
                     Color.white
                         .ignoresSafeArea()
-                    
+
                     ScrollView {
                         VStack(alignment: .leading, spacing: 24) {
-                        
+
                         // MARK: - Top Nav
                         HStack {
                             Spacer()
@@ -195,7 +98,7 @@ struct DashboardView: View {
                                     .foregroundColor(TFColors.softBlue)
                             }
                             .padding(.trailing, 12)
-                            
+
                             NavigationLink {
                                 SearchView()
                                     .navigationBarBackButtonHidden(true)
@@ -203,39 +106,15 @@ struct DashboardView: View {
                                 Image(systemName: "magnifyingglass")
                                     .font(.jakarta(size: 20))
                                     .foregroundColor(TFColors.softBlue) // TF Blue
-                            }                            
+                            }
                         }
                         .padding(.horizontal)
                         .padding(.top, 10)
-                        
+
                         // MARK: - Welcome Header
-                        HStack(spacing: 16) {
-                            Image("DashboardWelcome")
-                                .font(.jakarta(size: 45))
-                                .foregroundColor(TFColors.welcomeGold)
-                            
-                            VStack(alignment: .leading, spacing: 0) {
-                                if let userName = users.first?.name, !userName.isEmpty {
-                                    Text("Welcome back,")
-                                        .font(.jakarta(size: 26))
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(Color.black.opacity(0.7))
-                                    
-                                    Text(userName)
-                                        .font(.jakarta(size: 26))
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(TFColors.tabBlue) // TF Blue
-                                } else {
-                                    Text("Welcome back!")
-                                        .font(.jakarta(size: 26))
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(Color.black.opacity(0.7))
-                                }
-                            }
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-                        
+                        welcomeHeader
+                            .padding(.horizontal)
+
                         // MARK: - Jump back in! (White Bubble)
                         if !inProgressCategories.isEmpty {
                             VStack(alignment: .leading, spacing: 16) {
@@ -245,31 +124,12 @@ struct DashboardView: View {
                                     .foregroundColor(Color.black.opacity(0.8))
                                     .padding(.horizontal, 20)
                                     .padding(.top, 20)
-                                
+
                                 GeometryReader { geometry in
                                     ScrollView(.horizontal, showsIndicators: false) {
                                         HStack(spacing: 16) {
                                             ForEach(Array(inProgressCategories.enumerated()), id: \.element.category) { index, item in
-                                                Button {
-                                                    guard canAccessCategory(item.category) else { return }
-                                                    if item.mode == "Learn" {
-                                                        activeFlow = .learn(item.category)
-                                                    } else {
-                                                        activeFlow = .exercise(item.category)
-                                                    }
-                                                } label: {
-                                                    InProgressCard(
-                                                        category: item.category,
-                                                        mode: item.mode,
-                                                        progress: item.progress,
-                                                        backgroundColor: item.mode == "Exercise" ? TFColors.cardBlueBg : TFColors.cardGreenBg,
-                                                        borderColor: item.mode == "Exercise" ? TFColors.cardBlueBorder : TFColors.cardGreenBorder
-                                                    )
-                                                    .frame(width: 155)
-                                                    .opacity(canAccessCategory(item.category) ? 1.0 : 0.5)
-                                                }
-                                                .buttonStyle(.plain)
-                                                .disabled(!canAccessCategory(item.category))
+                                                inProgressButton(for: item, width: 155)
                                             }
                                         }
                                         .frame(minWidth: max(0, geometry.size.width - 40), alignment: .center)
@@ -288,53 +148,34 @@ struct DashboardView: View {
                             .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
                             .padding(.horizontal, 16)
                         }
-                        
+
                         // MARK: - Daily Challenge
                         Text("Keep up your streak!")
                             .font(.jakarta(size: 20))
                             .fontWeight(.semibold)
                             .foregroundColor(Color.black.opacity(0.8))
                             .padding(.horizontal)
-                        
-                        Button {
-                            activeFlow = .dailyChallenge
-                        } label: {
-                            DailyChallengeCard(
-                                streak: currentStreak,
-                                completed: dailyChallengeCompleted,
-                                total: dailyQueue.requestedLimit
-                            )
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.horizontal)
-                        
+
+                        dailyChallengeButton
+                            .padding(.horizontal)
+
                         // MARK: - Categories
                         Text("Categories")
                             .font(.jakarta(size: 20))
                             .fontWeight(.semibold)
                             .foregroundColor(Color.black.opacity(0.8))
                             .padding(.horizontal)
-                        
+
                         let columns = [
                             GridItem(.flexible(), spacing: 12)
                         ]
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(TermCategory.allCases, id: \.self) { category in
-                                Button {
-                                    guard canAccessCategory(category) else { return }
-                                    selectedCategoryForPopup = category
-                                    showModePopup = true
-                                } label: {
-                                    CategoryComponent(title: category.displayName)
-                                        .frame(maxWidth: .infinity)
-                                        .opacity(canAccessCategory(category) ? 1.0 : 0.5)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(!canAccessCategory(category))
+                                categoryButton(for: category, title: category.displayName)
                             }
                         }
                         .padding(.horizontal)
-                        
+
                         Spacer(minLength: 120) // Give space for the floating tab bar
                         }
                         .padding(.top, proxy.safeAreaInsets.top + 8)
@@ -354,41 +195,10 @@ struct DashboardView: View {
                 }
             }
             .popupHost(isPresented: $showModePopup) {
-                ModePopupView(
-                    isPresented: $showModePopup,
-                    isExerciseUnlocked: selectedCategoryForPopup.map { canAccessCategory($0) && isExerciseUnlocked(for: $0) } ?? false,
-                    onLearn: {
-                        if let cat = selectedCategoryForPopup {
-                            guard canAccessCategory(cat) else { return }
-                            activeFlow = .learn(cat)
-                        }
-                    },
-                    onExercise: {
-                        if let cat = selectedCategoryForPopup {
-                            guard canAccessCategory(cat) else { return }
-                            activeFlow = .exercise(cat)
-                        }
-                    }
-                )
+                modePopup
             }
             .fullScreenCover(item: $activeFlow) { flow in
-                switch flow {
-                case .learn(let category):
-                    FlexibleStartCardComponent(context: .learn(category), completed: 0, total: 12) {
-                        activeFlow = nil
-                    }
-                    .environment(dataVM)
-                case .exercise(let category):
-                    FlexibleStartCardComponent(context: .exercise(category), completed: 0, total: 12) {
-                        activeFlow = nil
-                    }
-                    .environment(dataVM)
-                case .dailyChallenge:
-                    FlexibleStartCardComponent(context: .dailyChallenge, completed: 0, total: 5) {
-                        activeFlow = nil
-                    }
-                    .environment(dataVM)
-                }
+                flowDestination(for: flow)
             }
             .onAppear {
                 loadUserFlashcardsIfNeeded()
@@ -399,15 +209,144 @@ struct DashboardView: View {
                 }
             }
         }
-        
+
 #endif
     }
-    
-    
+
+    // MARK: - Shared building blocks
+
+    /// Learn/Exercise chooser shown when a category is tapped; identical on
+    /// both platforms.
+    private var modePopup: some View {
+        ModePopupView(
+            isPresented: $showModePopup,
+            isExerciseUnlocked: selectedCategoryForPopup.map { canAccessCategory($0) && isExerciseUnlocked(for: $0) } ?? false,
+            onLearn: {
+                if let cat = selectedCategoryForPopup {
+                    guard canAccessCategory(cat) else { return }
+                    activeFlow = .learn(cat)
+                }
+            },
+            onExercise: {
+                if let cat = selectedCategoryForPopup {
+                    guard canAccessCategory(cat) else { return }
+                    activeFlow = .exercise(cat)
+                }
+            }
+        )
+    }
+
+    /// The start card presented for an active flow (macOS overlay,
+    /// iOS full-screen cover).
+    @ViewBuilder
+    private func flowDestination(for flow: ActiveFlow) -> some View {
+        switch flow {
+        case .learn(let category):
+            FlexibleStartCardComponent(context: .learn(category), completed: 0, total: 12) {
+                activeFlow = nil
+            }
+            .environment(dataVM)
+        case .exercise(let category):
+            FlexibleStartCardComponent(context: .exercise(category), completed: 0, total: 12) {
+                activeFlow = nil
+            }
+            .environment(dataVM)
+        case .dailyChallenge:
+            FlexibleStartCardComponent(context: .dailyChallenge, completed: 0, total: 5) {
+                activeFlow = nil
+            }
+            .environment(dataVM)
+        }
+    }
+
+    private var welcomeHeader: some View {
+        HStack(spacing: 16) {
+            Image("DashboardWelcome")
+                .font(.jakarta(size: 45))
+                .foregroundColor(TFColors.welcomeGold)
+
+            VStack(alignment: .leading, spacing: 0) {
+                if let userName = users.first?.name, !userName.isEmpty {
+                    Text("Welcome back,")
+                        .font(.jakarta(size: 26))
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.black.opacity(0.7))
+
+                    Text(userName)
+                        .font(.jakarta(size: 26))
+                        .fontWeight(.semibold)
+                        .foregroundColor(TFColors.tabBlue) // TF Blue
+                } else {
+                    Text("Welcome back!")
+                        .font(.jakarta(size: 26))
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color.black.opacity(0.7))
+                }
+            }
+            Spacer()
+        }
+    }
+
+    /// "Jump back in" card button. `width` pins the card width (iOS
+    /// horizontal scroller); when nil the card stretches (macOS row).
+    private func inProgressButton(for item: (category: TermCategory, progress: Float, mode: String), width: CGFloat? = nil) -> some View {
+        let maxWidth: CGFloat? = width == nil ? .infinity : nil
+        return Button {
+            guard canAccessCategory(item.category) else { return }
+            if item.mode == "Learn" {
+                activeFlow = .learn(item.category)
+            } else {
+                activeFlow = .exercise(item.category)
+            }
+        } label: {
+            InProgressCard(
+                category: item.category,
+                mode: item.mode,
+                progress: item.progress,
+                backgroundColor: item.mode == "Exercise" ? TFColors.cardBlueBg : TFColors.cardGreenBg,
+                borderColor: item.mode == "Exercise" ? TFColors.cardBlueBorder : TFColors.cardGreenBorder
+            )
+            .frame(width: width)
+            .frame(maxWidth: maxWidth)
+            .opacity(canAccessCategory(item.category) ? 1.0 : 0.5)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canAccessCategory(item.category))
+    }
+
+    private var dailyChallengeButton: some View {
+        Button {
+            activeFlow = .dailyChallenge
+        } label: {
+            DailyChallengeCard(
+                streak: currentStreak,
+                completed: dailyChallengeCompleted,
+                total: dailyQueue.requestedLimit
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func categoryButton(for category: TermCategory, title: String) -> some View {
+        Button {
+            guard canAccessCategory(category) else { return }
+            selectedCategoryForPopup = category
+            showModePopup = true
+        } label: {
+            CategoryComponent(title: title)
+                .frame(maxWidth: .infinity)
+                .opacity(canAccessCategory(category) ? 1.0 : 0.5)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canAccessCategory(category))
+    }
+
+    // MARK: - Mac content
+
     var dashboardContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                
+
                 // MARK: - Search
                 NavigationLink {
                     SearchView()
@@ -424,7 +363,7 @@ struct DashboardView: View {
                                 RoundedRectangle(cornerRadius: 6)
                                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
                             )
-                        
+
                         Image(systemName: "magnifyingglass")
                             .font(.jakarta(size: 20))
                             .foregroundColor(TFColors.softBlue) // TF Blue
@@ -444,35 +383,11 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                
+
                 // MARK: - Welcome Header
-                HStack(spacing: 16) {
-                    Image("DashboardWelcome")
-                        .font(.jakarta(size: 45))
-                        .foregroundColor(TFColors.welcomeGold)
-                    
-                    VStack(alignment: .leading, spacing: 0) {
-                        if let userName = users.first?.name, !userName.isEmpty {
-                            Text("Welcome back,")
-                                .font(.jakarta(size: 26))
-                                .fontWeight(.semibold)
-                                .foregroundColor(Color.black.opacity(0.7))
-                            
-                            Text(userName)
-                                .font(.jakarta(size: 26))
-                                .fontWeight(.semibold)
-                                .foregroundColor(TFColors.tabBlue) // TF Blue
-                        } else {
-                            Text("Welcome back!")
-                                .font(.jakarta(size: 26))
-                                .fontWeight(.semibold)
-                                .foregroundColor(Color.black.opacity(0.7))
-                        }
-                    }
-                    Spacer()
-                }
-                .padding(.top, 10)
-                
+                welcomeHeader
+                    .padding(.top, 10)
+
                 // MARK: - Mac Jump Back In
                 if !inProgressCategories.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
@@ -480,29 +395,10 @@ struct DashboardView: View {
                             .font(.jakartaTitle)
                             .padding(.horizontal, 20)
                             .padding(.top, 20)
-                        
+
                         HStack(spacing: 16) {
                             ForEach(Array(inProgressCategories.enumerated()), id: \.element.category) { index, item in
-                                Button {
-                                    guard canAccessCategory(item.category) else { return }
-                                    if item.mode == "Learn" {
-                                        activeFlow = .learn(item.category)
-                                    } else {
-                                        activeFlow = .exercise(item.category)
-                                    }
-                                } label: {
-                                    InProgressCard(
-                                        category: item.category,
-                                        mode: item.mode,
-                                        progress: item.progress,
-                                        backgroundColor: item.mode == "Exercise" ? TFColors.cardBlueBg : TFColors.cardGreenBg,
-                                        borderColor: item.mode == "Exercise" ? TFColors.cardBlueBorder : TFColors.cardGreenBorder,
-                                    )
-                                    .frame(maxWidth: .infinity)
-                                    .opacity(canAccessCategory(item.category) ? 1.0 : 0.5)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(!canAccessCategory(item.category))
+                                inProgressButton(for: item)
                             }
                         }
                         .padding(.horizontal, 20)
@@ -512,43 +408,20 @@ struct DashboardView: View {
                     .cornerRadius(24)
                     .shadow(color: .black.opacity(0.04), radius: 10, x: 0, y: 4)
                 }
-                
+
                 // MARK: - Mac Daily Challenge
                 Text("Daily Challenge")
                     .font(.jakartaTitle)
 
-                Button {
-                    activeFlow = .dailyChallenge
-                } label: {
-                    DailyChallengeCard(
-                        streak: currentStreak,
-                        completed: dailyChallengeCompleted,
-                        total: dailyQueue.requestedLimit
-                    )
-                }
-                .buttonStyle(.plain)
-                
+                dailyChallengeButton
+
                 // MARK: - Categories
                 Text("Categories")
                     .font(.jakartaTitle)
-                
+
                 VStack(spacing: 12) {
-                    ForEach(allCategories, id: \.self) { category in
-                        let resolvedCategory = self.category(from: category)
-                        let isAccessible = resolvedCategory.map(canAccessCategory) ?? true
-                        Button {
-                            if let cat = resolvedCategory {
-                                guard canAccessCategory(cat) else { return }
-                                selectedCategoryForPopup = cat
-                                showModePopup = true
-                            }
-                        } label: {
-                            CategoryComponent(title: category)
-                                .frame(maxWidth: .infinity)
-                                .opacity(isAccessible ? 1.0 : 0.5)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(!isAccessible)
+                    ForEach(TermCategory.allCases, id: \.self) { category in
+                        categoryButton(for: category, title: category.rawValue.capitalized)
                     }
                 }
             }
@@ -564,176 +437,25 @@ struct DashboardView: View {
         }
     }
 
-    
+
     func categoryDetailView(_ category: String) -> some View {
         VStack {
-             HStack {
+             HStack {
                 Button {
                     currentView = "Home"
                 } label: {
                     Image(systemName: "arrow.left")
                 }
-                
+
                 Spacer()
             }
-            
+
             Text(category)
                 .font(.jakartaLargeTitle)
-            
+
             Spacer()
         }
         .padding()
-    }
-}
-    
-extension DashboardView {
-    private func loadUserFlashcardsIfNeeded() {
-        guard flashcardVM.flashcards.isEmpty, !flashcardVM.isLoading else { return }
-        Task {
-            await flashcardVM.loadFlashcards(modelContext: modelContext)
-        }
-    }
-}
-    
-// MARK: - In Progress Card
-
-private struct InProgressCard: View {
-    let category: TermCategory
-    let mode: String
-    let progress: Float
-    let backgroundColor: Color
-    let borderColor: Color
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            
-            Spacer(minLength: 0)
-
-            Image(systemName: category.iconName)
-                .resizable()
-                .scaledToFit()
-                .frame(height: 70)
-                .foregroundColor(borderColor)
-
-            VStack(spacing: 4) {
-                Text("Continue \(mode)")
-                    .font(.jakarta(size: 15))
-                    .foregroundStyle(.secondary)
-
-                Text(category.displayName.capitalized)
-                    .font(.jakarta(size: 20))
-                    .fontWeight(.semibold)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(borderColor)
-
-            }
-
-            Spacer(minLength: 0)
-
-            HStack(spacing: 6) {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color.white.opacity(0.6))
-
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Color(red: 0.45, green: 0.65, blue: 0.25))
-                            .frame(width: geo.size.width * CGFloat(progress / 100))
-                    }
-                }
-                .frame(height: 8)
-
-                Text("\(Int(progress))%")
-                    .font(.jakarta(size: 12))
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity)
-        .frame(height: 220)
-        .background(backgroundColor)
-        .cornerRadius(15)
-        .overlay(
-            RoundedRectangle(cornerRadius: 15)
-                .strokeBorder(borderColor, lineWidth: 2)
-        )
-    }
-}
-
-// MARK: - Daily Challenge Card
-
-private struct DailyChallengeCard: View {
-    let streak: Int
-    let completed: Int
-    let total: Int
-
-    var progress: CGFloat {
-        CGFloat(Double(completed) / Double(max(total, 1)))
-    }
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 14) {
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill")
-                       // .font(.jakarta(size: 14))
-                        .foregroundColor(TFColors.challengeGold)
-                    Text("\(streak) Day Streak")
-                        .font(.jakarta(size: 14))
-                        .fontWeight(.medium)
-                        .foregroundColor(Color(red: 0.5, green: 0.35, blue: 0.1))
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color(red: 0.98, green: 0.88, blue: 0.65))
-                )
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Practice Missed Signs")
-                        .font(.jakarta(size: 22))
-                        .fontWeight(.semibold)
-                        .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.2))
-
-                    Text("+20XP")
-                        .font(.jakarta(size: 15))
-                        .fontWeight(.medium)
-                        .foregroundColor(Color(red: 0.3, green: 0.3, blue: 0.3).opacity(0.8))
-                }
-
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.7))
-
-                        Capsule()
-                            .fill(TFColors.tabBlue)
-                            .frame(width: geo.size.width * progress)
-                    }
-                }
-                .frame(height: 10)
-            }
-
-            Spacer()
-
-            Image(systemName: "medal.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 65)
-                .foregroundColor(TFColors.challengeGold)
-                .padding(.trailing, 8)
-        }
-        .padding(24)
-        .background(Color(red: 0.99, green: 0.95, blue: 0.86))
-        .cornerRadius(24)
-        .overlay(
-            RoundedRectangle(cornerRadius: 15)
-                .strokeBorder(Color(red: 0.963, green: 0.86, blue: 0.609), lineWidth: 2)
-        )
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 }
 
