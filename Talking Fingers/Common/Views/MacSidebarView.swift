@@ -124,10 +124,10 @@ struct MacSidebarView: View {
 
     private var navItemsSection: some View {
         VStack(spacing: 4) {
-            ForEach(Self.items, id: \.section) { item in
+            ForEach(MainNavigationView.mainNavItems, id: \.section) { item in
                 MacSidebarNavItem(
                     title: item.title,
-                    systemImage: item.systemImage,
+                    systemImage: item.icon,
                     isSelected: selection == item.section,
                     isCollapsed: isCollapsed
                 ) {
@@ -136,18 +136,6 @@ struct MacSidebarView: View {
             }
         }
     }
-
-    fileprivate struct Item {
-        let section: MainNavigationView.NavigationSection
-        let title: String
-        let systemImage: String
-    }
-
-    fileprivate static let items: [Item] = [
-        .init(section: .home,     title: "Home",     systemImage: "house.fill"),
-        .init(section: .practice, title: "Practice", systemImage: "hand.raised.fill"),
-        .init(section: .stats,    title: "Profile",  systemImage: "person.fill"),
-    ]
 }
 
 // MARK: - Individual nav row

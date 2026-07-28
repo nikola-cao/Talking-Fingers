@@ -99,6 +99,21 @@ struct MainNavigationView: View {
     enum NavigationSection: Hashable {
         case home, stats, camera, review, practice
     }
+
+    /// One entry in the main navigation (Mac sidebar / iOS floating tab bar).
+    struct NavItem {
+        let section: NavigationSection
+        let title: String
+        let icon: String
+    }
+
+    /// Single source for the sections exposed in the main navigation on both
+    /// platforms. (`.camera`/`.review` are dev tools and deliberately absent.)
+    static let mainNavItems: [NavItem] = [
+        NavItem(section: .home, title: "Home", icon: "house.fill"),
+        NavItem(section: .practice, title: "Practice", icon: "hand.raised.fill"),
+        NavItem(section: .stats, title: "Profile", icon: "person.fill"),
+    ]
 }
 
 #if os(iOS)
@@ -108,24 +123,14 @@ private struct MainFloatingTabBar: View {
     var body: some View {
         HStack {
             Spacer()
-            tabButton(
-                icon: "house.fill",
-                title: "Home",
-                section: .home
-            )
-            Spacer()
-            tabButton(
-                icon: "hand.raised.fill",
-                title: "Practice",
-                section: .practice
-            )
-            Spacer()
-            tabButton(
-                icon: "person.fill",
-                title: "Profile",
-                section: .stats
-            )
-            Spacer()
+            ForEach(MainNavigationView.mainNavItems, id: \.section) { item in
+                tabButton(
+                    icon: item.icon,
+                    title: item.title,
+                    section: item.section
+                )
+                Spacer()
+            }
         }
         .padding(.vertical, 9)
         .background(Color.white)
