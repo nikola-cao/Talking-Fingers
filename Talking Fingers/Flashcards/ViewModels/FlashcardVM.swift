@@ -18,34 +18,6 @@ class FlashcardVM {
     /// after merging remote progress (replaces the one-time launch download).
     private var refreshFlashcardsOnNextSnapshot = false
 
-    static let dummyFlashcards: [FlashcardModel] = {
-        let calendar = Calendar.current
-        let now = Date()
-
-        func daysAgo(_ days: Int) -> Date {
-            calendar.date(byAdding: .day, value: -days, to: now)!
-        }
-
-        return [
-            FlashcardModel(term: .hello, id: UUID(), lastSucceeded: nil, starred: false, progress: .new, category: .greetings, gifFileName: Term.hello.defaultGifFileName),
-            FlashcardModel(term: .a, id: UUID(), lastSucceeded: nil, starred: false, progress: .new, category: .greetings),
-            FlashcardModel(term: .bye, id: UUID(), lastSucceeded: daysAgo(10), starred: false, progress: .learning, category: .greetings),
-            FlashcardModel(term: .nice, id: UUID(), lastSucceeded: daysAgo(3), starred: true, progress: .learning, category: .greetings),
-            FlashcardModel(term: .how, id: UUID(), lastSucceeded: daysAgo(1), starred: false, progress: .polishing, category: .greetings),
-
-            FlashcardModel(term: .one, id: UUID(), lastSucceeded: daysAgo(8), starred: false, progress: .learning, category: .numbers),
-            FlashcardModel(term: .zero, id: UUID(), lastSucceeded: nil, starred: false, progress: .new, category: .numbers),
-            FlashcardModel(term: .two, id: UUID(), lastSucceeded: daysAgo(2), starred: false, progress: .polishing, category: .numbers),
-            FlashcardModel(term: .three, id: UUID(), lastSucceeded: daysAgo(5), starred: true, progress: .polishing, category: .numbers),
-            FlashcardModel(term: .four, id: UUID(), lastSucceeded: daysAgo(1), starred: false, progress: .mastered, category: .numbers),
-
-            FlashcardModel(term: .good, id: UUID(), lastSucceeded: daysAgo(1), starred: false, progress: .mastered, category: .commonDescriptors),
-//            FlashcardModel(term: .happy, id: UUID(), lastSucceeded: daysAgo(2), starred: false, progress: .mastered, category: .feelingsEmotions),
-//            FlashcardModel(term: .sad, id: UUID(), lastSucceeded: daysAgo(3), starred: true, progress: .polishing, category: .feelingsEmotions),
-//            FlashcardModel(term: .excited, id: UUID(), lastSucceeded: daysAgo(1), starred: false, progress: .mastered, category: .feelingsEmotions),
-        ]
-    }()
-    
     func returnProgress(flashcards: [FlashcardModel]) -> Float {
         guard !flashcards.isEmpty else { return 0.0 }
         var progressTotal: Float = 0.0
