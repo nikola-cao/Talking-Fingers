@@ -9,7 +9,7 @@ import SwiftUI
 
 struct SearchView: View {
     
-    @StateObject private var vm = SearchViewModel()
+    @State private var vm = SearchViewModel()
     @State private var activeTerm: Term?
     @FocusState private var isFocused: Bool
     @Environment(\.dismiss) private var dismiss

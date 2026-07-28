@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
-import Combine
+import Observation
 
-class LearnModeVM: ObservableObject {
+@Observable
+class LearnModeVM {
 
     enum LearnState {
         case initial
@@ -16,8 +17,8 @@ class LearnModeVM: ObservableObject {
         case showingHint
     }
 
-    @Published var state: LearnState = .initial
-    @Published private(set) var hasGoodConfidence: Bool = false
+    var state: LearnState = .initial
+    private(set) var hasGoodConfidence: Bool = false
     
     var onAnswer: ((Bool) -> Void)? = nil
 

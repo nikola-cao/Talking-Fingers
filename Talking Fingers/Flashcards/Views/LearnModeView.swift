@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LearnModeView: View {
-    @ObservedObject var vm: LearnModeVM
+    var vm: LearnModeVM
     var progress: Double
     var onClose: () -> Void = {}
     

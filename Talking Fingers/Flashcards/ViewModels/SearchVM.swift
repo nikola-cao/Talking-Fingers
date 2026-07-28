@@ -5,16 +5,17 @@
 //  Created by Sanvi Adusumilli on 4/6/26.
 //
 import Foundation
-import Combine
+import Observation
 
-class SearchViewModel: ObservableObject {
-    @Published var searchText: String = ""
-    @Published var results: [Term] = []
-    
+@Observable
+class SearchViewModel {
+    var searchText: String = ""
+    var results: [Term] = []
+
     private let recentSearchesKey = "recentSearches"
     private let maxRecentSearches = 5
-    
-    @Published var recentSearches: [String] = []
+
+    var recentSearches: [String] = []
     
     init() {
         recentSearches = UserDefaults.standard.stringArray(forKey: recentSearchesKey) ?? []
