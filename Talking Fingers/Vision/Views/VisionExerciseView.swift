@@ -35,8 +35,8 @@ struct VisionExerciseView: View {
     @State private var viewHeight: CGFloat = 600
 
     // MARK: - Constants
-    private let tfGreen      = Color(red: 159/255, green: 192/255, blue: 122/255)
-    private let tfGreenText  = Color(red: 82/255,  green: 106/255, blue: 54/255)
+    private let tfGreen      = TFColors.tfGreen
+    private let tfGreenText  = TFColors.tfGreenText
 
     /// 58 % of the view height, clamped so it never looks tiny on small phones or
     /// absurdly tall on large displays / macOS windows.
@@ -47,7 +47,7 @@ struct VisionExerciseView: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            Color(hex: 0xFFFFFF).ignoresSafeArea()
+            TFColors.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 topBar
@@ -68,7 +68,7 @@ struct VisionExerciseView: View {
                     .padding(.bottom, 24)
                 }
             }
-            .background(Color(hex: 0xFFFFFF))
+            .background(TFColors.white)
             #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
             #endif
@@ -241,9 +241,9 @@ struct SessionTopBar<Trailing: View>: View {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(Color(red: 0.88, green: 0.92, blue: 0.96))
+                            .fill(TFColors.trackBlueLight)
                         Capsule()
-                            .fill(Color(red: 0.30, green: 0.55, blue: 0.85))
+                            .fill(TFColors.tabBlue)
                             .frame(width: geo.size.width * CGFloat(progress))
                     }
                 }
@@ -285,8 +285,8 @@ struct SigningCameraCard: View {
 
     @State private var isSaved: Bool = false
 
-    private let tfGreen     = Color(red: 159/255, green: 192/255, blue: 122/255)
-    private let tfGreenText = Color(red: 82/255,  green: 106/255, blue: 54/255)
+    private let tfGreen     = TFColors.tfGreen
+    private let tfGreenText = TFColors.tfGreenText
     private let circleSize: CGFloat = 48
 
     var body: some View {
@@ -351,7 +351,7 @@ struct SigningCameraCard: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 7)
-                                .background(Color(hex: "#97C171"))
+                                .background(TFColors.green)
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)

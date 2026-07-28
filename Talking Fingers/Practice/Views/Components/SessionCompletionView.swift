@@ -30,7 +30,7 @@ struct SessionCompletionView: View {
     private let accentLow = TFColors.red
     /// Fills only the large session score ring (softer than accent).
     private let scoreRingFillHigh = Color(hex: "#B1D094")
-    private let scoreRingFillMed = Color(hex: "#FACD6B")
+    private let scoreRingFillMed = TFColors.softGold
     private let scoreRingFillLow = Color(hex: "#FF6F71")
     private let gradientTopHigh = Color(hex: "#F0F6EA")
     private let gradientBottomHigh = Color(hex: "#FAFCF8")

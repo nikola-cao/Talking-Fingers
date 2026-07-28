@@ -157,7 +157,7 @@ struct FlexibleStartCardComponent: View {
     private var startView: some View {
         ZStack {
             VStack(spacing: 16) {
-                let lightGreen = Color(red: 0.56, green: 0.72, blue: 0.44)
+                let lightGreen = TFColors.lightGreen
                 let isDaily = context.isDailyChallenge
 
                 Spacer()
@@ -180,7 +180,7 @@ struct FlexibleStartCardComponent: View {
                 if case .dailyChallenge = context {
                     Text(context.title)
                         .font(.jakarta(size: 42, weight: .bold))
-                        .foregroundColor(Color(red: 0.56, green: 0.72, blue: 0.44))
+                        .foregroundColor(TFColors.lightGreen)
                 } else {
                     Text(context.title)
                         .font(.jakarta(size: 40))
@@ -189,7 +189,7 @@ struct FlexibleStartCardComponent: View {
                     
                     Text(context.subtitle)
                         .font(.jakarta(size: 42, weight: .bold))
-                        .foregroundColor(context.isLearn ? Color(red: 0.56, green: 0.72, blue: 0.44) : Color(red: 0.58, green: 0.72, blue: 0.85))
+                        .foregroundColor(context.isLearn ? TFColors.lightGreen : Color(red: 0.58, green: 0.72, blue: 0.85))
                         .multilineTextAlignment(.center)
                 }
 
@@ -222,7 +222,7 @@ struct FlexibleStartCardComponent: View {
                         .padding(.vertical, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(Color(red: 0.56, green: 0.72, blue: 0.44))
+                                .fill(TFColors.lightGreen)
                         )
                 }
                 .buttonStyle(.plain)
@@ -233,12 +233,12 @@ struct FlexibleStartCardComponent: View {
                 }) {
                     Text("Go Home")
                         .font(.headline)
-                        .foregroundColor(Color(red: 0.30, green: 0.55, blue: 0.30))
+                        .foregroundColor(TFColors.darkGreenText)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
                             RoundedRectangle(cornerRadius: 14)
-                                .fill(Color(red: 0.56, green: 0.72, blue: 0.44).opacity(0.25))
+                                .fill(TFColors.lightGreen.opacity(0.25))
                         )
                 }
                 .buttonStyle(.plain)

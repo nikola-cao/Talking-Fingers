@@ -16,7 +16,7 @@ struct CategoryComponent: View {
             // ICON
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(red: 0.95, green: 0.75, blue: 0.20))
+                    .fill(TFColors.categoryGold)
                     .frame(width: 44, height: 44)
                 
                 Image(systemName: iconName(for: title))
@@ -42,7 +42,7 @@ struct CategoryComponent: View {
         .background(Color(red: 0.96, green: 0.92, blue: 0.80))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(red: 0.95, green: 0.75, blue: 0.20), lineWidth: 1)
+                .stroke(TFColors.categoryGold, lineWidth: 1)
         )
         .cornerRadius(16)
     }

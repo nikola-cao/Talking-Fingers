@@ -31,12 +31,12 @@ struct ObPracticeView: View {
                 ForEach(letters.indices, id: \.self) { i in
                     Text(String(letters[i]))
                         .font(.jakarta(size: 32, weight: .semibold))
-                        .foregroundColor(i == currentIndex ? OnboardingStyle.textDark : Color(hex: "#CCCCCC"))
+                        .foregroundColor(i == currentIndex ? OnboardingStyle.textDark : TFColors.midGray)
 
                     if i != letters.count - 1 {
                         Text("-")
                             .font(.jakarta(size: 32, weight: .semibold))
-                            .foregroundColor(Color(hex: "#CCCCCC"))
+                            .foregroundColor(TFColors.midGray)
                     }
                 }
             }
@@ -156,7 +156,7 @@ struct ObPracticeView: View {
                 if isCompleted {
                     Image(systemName: "checkmark")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#71A046"))
+                        .foregroundColor(TFColors.deepGreen)
                 } else if isCurrent {
                     Image(systemName: "lightbulb.max")
                         .font(.system(size: 20, weight: .semibold))
@@ -164,14 +164,14 @@ struct ObPracticeView: View {
                 } else {
                     Image(systemName: "lock.fill")
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(Color(hex: "#B3B3B3"))
+                        .foregroundColor(TFColors.lightGray)
                 }
             }
             .frame(width: Self.progressCircleColumnWidth, height: Self.progressCircleColumnWidth, alignment: .center)
 
             Text(wordLabel)
                 .font(.jakarta(size: 17, weight: .bold))
-                .foregroundColor(Color(hex: "#767676"))
+                .foregroundColor(TFColors.textGray)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .opacity(isCurrent ? 1 : 0)

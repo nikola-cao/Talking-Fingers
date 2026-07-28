@@ -95,7 +95,7 @@ struct SignHintSheetView: View {
             if let gifFileName {
                 GIFView(gifFileName: gifFileName)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(hex: "#FAFAFA"))
+                    .background(TFColors.nearWhite)
             } else {
                 VStack(spacing: 12) {
                     Image(systemName: "hand.raised.fingers.spread")
@@ -198,7 +198,7 @@ struct SignHintSheetView: View {
             GIFView(gifFileName: gifFileName)
                 .frame(maxWidth: .infinity)
                 .frame(height: 200)
-                .background(Color(hex: "#FAFAFA"))
+                .background(TFColors.nearWhite)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)

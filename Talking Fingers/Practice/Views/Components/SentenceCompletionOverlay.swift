@@ -25,7 +25,7 @@ struct SentenceCompletionOverlay: View {
             switch self {
             case .high: return TFColors.deepGreen
             case .medium: return TFColors.amber
-            case .low: return Color(hex: "#EF1013")
+            case .low: return TFColors.alertRed
             }
         }
 
@@ -40,7 +40,7 @@ struct SentenceCompletionOverlay: View {
         var background: Color {
             switch self {
             case .high: return TFColors.paleGreen
-            case .medium: return Color(hex: "#FEF7E7")
+            case .medium: return TFColors.cream
             case .low: return TFColors.paleRed
             }
         }

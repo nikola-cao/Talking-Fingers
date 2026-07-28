@@ -45,7 +45,7 @@ struct MacSidebarView: View {
         .background(Color.white)
         .overlay(alignment: .trailing) {
             Rectangle()
-                .fill(Color(hex: "#E8E8E8"))
+                .fill(TFColors.borderGray)
                 .frame(width: 1)
         }
         .animation(.easeInOut(duration: 0.22), value: isCollapsed)
@@ -79,7 +79,7 @@ struct MacSidebarView: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(height: height)
-            .foregroundColor(Color(hex: "#464646"))
+            .foregroundColor(TFColors.darkerGray)
     }
 
     private var collapseToggle: some View {
@@ -88,7 +88,7 @@ struct MacSidebarView: View {
         } label: {
             Image(systemName: "sidebar.left")
                 .font(.jakarta(size: 14, weight: .regular))
-                .foregroundColor(Color(hex: "#767676"))
+                .foregroundColor(TFColors.textGray)
                 .padding(6)
                 .contentShape(Rectangle())
         }
@@ -161,11 +161,11 @@ struct MacSidebarNavItem: View {
 
     @State private var isHovering = false
 
-    private let selectedTint = Color(hex: "#2A7BBC")
+    private let selectedTint = TFColors.headerBlue
     private let selectedBackground = Color(hex: "#E6F1FA")
     private let hoverBackground = Color(hex: "#F3F6F9")
     private let neutralText = Color(hex: "#1F1F1F")
-    private let neutralIcon = Color(hex: "#464646")
+    private let neutralIcon = TFColors.darkerGray
 
     var body: some View {
         Button(action: action) {

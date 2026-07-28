@@ -49,7 +49,7 @@ struct GenerateSentencesView: View {
     }
 
     private var practiceTitleColor: Color {
-        Color(hex: isComprehensionOnlyMode ? "#58A0DA" : "#71A046")
+        isComprehensionOnlyMode ? TFColors.blue : TFColors.deepGreen
     }
     
     var body: some View {

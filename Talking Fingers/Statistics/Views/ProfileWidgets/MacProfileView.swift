@@ -68,7 +68,7 @@ struct MacProfileView: View {
         ZStack(alignment: .topLeading) {
             VStack(spacing: 0) {
                 Rectangle()
-                    .fill(Color(hex: 0xA1B486).opacity(0.5))
+                    .fill(TFColors.avatarGreen.opacity(0.5))
                     .frame(height: 110)
                 Color.clear.frame(height: 80)
             }
@@ -164,7 +164,7 @@ struct MacProfileView: View {
                 .frame(width: 120, height: 120)
         } else {
             ZStack {
-                Color(hex: 0xA1B486).opacity(0.5)
+                TFColors.avatarGreen.opacity(0.5)
                 Image(systemName: "cat.fill")
                     .resizable()
                     .aspectRatio(contentMode: .fit)

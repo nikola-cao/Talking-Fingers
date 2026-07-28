@@ -50,4 +50,40 @@ enum TFColors {
     static let headerGradientBottom = Color(hex: 0xDEECF8)
     /// Progress-bar track (8-digit hex: includes alpha).
     static let barTrackBlue = Color(hex: "#A9CEEC26")
+
+    // Brand greens
+    static let tfGreen = Color(red: 159/255, green: 192/255, blue: 122/255)
+    static let tfGreenText = Color(red: 82/255, green: 106/255, blue: 54/255)
+    static let lightGreen = Color(red: 0.56, green: 0.72, blue: 0.44)
+    static let darkGreenText = Color(red: 0.30, green: 0.55, blue: 0.30)
+    static let forestGreen = Color(hex: 0x4A7C3F)
+    static let avatarGreen = Color(hex: 0xA1B486)
+
+    // Blues
+    static let softBlue = Color(red: 0.569, green: 0.724, blue: 0.879)
+    static let trackBlueLight = Color(red: 0.88, green: 0.92, blue: 0.96)
+    static let cardBlueBg = Color(red: 0.931, green: 0.956, blue: 0.981)
+    static let cardBlueBorder = Color(red: 0.691, green: 0.803, blue: 0.914)
+    static let comprehensionBlue = Color(hex: 0x5E9ECC)
+    static let comprehensionPaleBlue = Color(hex: 0xE6F1F9)
+    static let comprehensionBorderBlue = Color(hex: 0xA5C1D8)
+
+    // Card greens
+    static let cardGreenBg = Color(red: 0.942, green: 0.964, blue: 0.942)
+    static let cardGreenBorder = Color(red: 0.704, green: 0.804, blue: 0.585)
+    static let mintTint = Color(hex: 0xF4F9F1)
+
+    // Golds / warm accents
+    static let sandGold = Color(red: 0.93, green: 0.78, blue: 0.50)
+    static let softGold = Color(hex: 0xFACD6B)
+    static let welcomeGold = Color(red: 0.85, green: 0.8, blue: 0.3)
+    static let challengeGold = Color(red: 0.90, green: 0.72, blue: 0.30)
+    static let categoryGold = Color(red: 0.95, green: 0.75, blue: 0.20)
+    static let cream = Color(hex: 0xFEF7E7)
+    static let paleCream = Color(hex: 0xFFF8E5)
+
+    // Misc
+    static let alertRed = Color(hex: 0xEF1013)
+    static let nearWhite = Color(hex: 0xFAFAFA)
+    static let midGray = Color(hex: 0xCCCCCC)
 }

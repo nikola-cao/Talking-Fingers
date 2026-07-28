@@ -192,7 +192,7 @@ struct DashboardView: View {
                             } label: {
                                 Image(systemName: "questionmark.circle")
                                     .font(.jakarta(size: 20))
-                                    .foregroundColor(Color(red: 0.569, green: 0.724, blue: 0.879))
+                                    .foregroundColor(TFColors.softBlue)
                             }
                             .padding(.trailing, 12)
                             
@@ -202,7 +202,7 @@ struct DashboardView: View {
                             } label: {
                                 Image(systemName: "magnifyingglass")
                                     .font(.jakarta(size: 20))
-                                    .foregroundColor(Color(red: 0.569, green: 0.724, blue: 0.879)) // TF Blue
+                                    .foregroundColor(TFColors.softBlue) // TF Blue
                             }                            
                         }
                         .padding(.horizontal)
@@ -212,7 +212,7 @@ struct DashboardView: View {
                         HStack(spacing: 16) {
                             Image("DashboardWelcome")
                                 .font(.jakarta(size: 45))
-                                .foregroundColor(Color(red: 0.85, green: 0.8, blue: 0.3))
+                                .foregroundColor(TFColors.welcomeGold)
                             
                             VStack(alignment: .leading, spacing: 0) {
                                 if let userName = users.first?.name, !userName.isEmpty {
@@ -224,7 +224,7 @@ struct DashboardView: View {
                                     Text(userName)
                                         .font(.jakarta(size: 26))
                                         .fontWeight(.semibold)
-                                        .foregroundColor(Color(red: 0.30, green: 0.55, blue: 0.85)) // TF Blue
+                                        .foregroundColor(TFColors.tabBlue) // TF Blue
                                 } else {
                                     Text("Welcome back!")
                                         .font(.jakarta(size: 26))
@@ -262,8 +262,8 @@ struct DashboardView: View {
                                                         category: item.category,
                                                         mode: item.mode,
                                                         progress: item.progress,
-                                                        backgroundColor: item.mode == "Exercise" ? Color(red: 0.931, green: 0.956, blue: 0.981) : Color(red: 0.942, green: 0.964, blue: 0.942),
-                                                        borderColor: item.mode == "Exercise" ? Color(red: 0.691, green: 0.803, blue: 0.914) : Color(red: 0.704, green: 0.804, blue: 0.585)
+                                                        backgroundColor: item.mode == "Exercise" ? TFColors.cardBlueBg : TFColors.cardGreenBg,
+                                                        borderColor: item.mode == "Exercise" ? TFColors.cardBlueBorder : TFColors.cardGreenBorder
                                                     )
                                                     .frame(width: 155)
                                                     .opacity(canAccessCategory(item.category) ? 1.0 : 0.5)
@@ -341,8 +341,8 @@ struct DashboardView: View {
                         .background(alignment: .top) {
                             LinearGradient(
                                 colors: [
-                                    Color(red: 238/255, green: 246/255, blue: 251/255), // #EEF6FB
-                                    Color(red: 222/255, green: 236/255, blue: 248/255)  // #DEECF8
+                                    TFColors.headerGradientTop,
+                                    TFColors.headerGradientBottom
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
@@ -427,7 +427,7 @@ struct DashboardView: View {
                         
                         Image(systemName: "magnifyingglass")
                             .font(.jakarta(size: 20))
-                            .foregroundColor(Color(red: 0.569, green: 0.724, blue: 0.879)) // TF Blue
+                            .foregroundColor(TFColors.softBlue) // TF Blue
                             .padding(.leading, 8)
                     }
                 }
@@ -440,7 +440,7 @@ struct DashboardView: View {
                     } label: {
                         Label("View Onboarding", systemImage: "questionmark.circle")
                             .font(.jakarta(size: 16, weight: .semibold))
-                            .foregroundColor(Color(red: 0.569, green: 0.724, blue: 0.879))
+                            .foregroundColor(TFColors.softBlue)
                     }
                     .buttonStyle(.plain)
                 }
@@ -449,7 +449,7 @@ struct DashboardView: View {
                 HStack(spacing: 16) {
                     Image("DashboardWelcome")
                         .font(.jakarta(size: 45))
-                        .foregroundColor(Color(red: 0.85, green: 0.8, blue: 0.3))
+                        .foregroundColor(TFColors.welcomeGold)
                     
                     VStack(alignment: .leading, spacing: 0) {
                         if let userName = users.first?.name, !userName.isEmpty {
@@ -461,7 +461,7 @@ struct DashboardView: View {
                             Text(userName)
                                 .font(.jakarta(size: 26))
                                 .fontWeight(.semibold)
-                                .foregroundColor(Color(red: 0.30, green: 0.55, blue: 0.85)) // TF Blue
+                                .foregroundColor(TFColors.tabBlue) // TF Blue
                         } else {
                             Text("Welcome back!")
                                 .font(.jakarta(size: 26))
@@ -495,8 +495,8 @@ struct DashboardView: View {
                                         category: item.category,
                                         mode: item.mode,
                                         progress: item.progress,
-                                        backgroundColor: item.mode == "Exercise" ? Color(red: 0.931, green: 0.956, blue: 0.981) : Color(red: 0.942, green: 0.964, blue: 0.942),
-                                        borderColor: item.mode == "Exercise" ? Color(red: 0.691, green: 0.803, blue: 0.914) : Color(red: 0.704, green: 0.804, blue: 0.585),
+                                        backgroundColor: item.mode == "Exercise" ? TFColors.cardBlueBg : TFColors.cardGreenBg,
+                                        borderColor: item.mode == "Exercise" ? TFColors.cardBlueBorder : TFColors.cardGreenBorder,
                                     )
                                     .frame(maxWidth: .infinity)
                                     .opacity(canAccessCategory(item.category) ? 1.0 : 0.5)
@@ -679,7 +679,7 @@ private struct DailyChallengeCard: View {
                 HStack(spacing: 4) {
                     Image(systemName: "flame.fill")
                        // .font(.jakarta(size: 14))
-                        .foregroundColor(Color(red: 0.90, green: 0.72, blue: 0.30))
+                        .foregroundColor(TFColors.challengeGold)
                     Text("\(streak) Day Streak")
                         .font(.jakarta(size: 14))
                         .fontWeight(.medium)
@@ -710,7 +710,7 @@ private struct DailyChallengeCard: View {
                             .fill(Color.white.opacity(0.7))
 
                         Capsule()
-                            .fill(Color(red: 0.30, green: 0.55, blue: 0.85))
+                            .fill(TFColors.tabBlue)
                             .frame(width: geo.size.width * progress)
                     }
                 }
@@ -723,7 +723,7 @@ private struct DailyChallengeCard: View {
                 .resizable()
                 .scaledToFit()
                 .frame(height: 65)
-                .foregroundColor(Color(red: 0.90, green: 0.72, blue: 0.30))
+                .foregroundColor(TFColors.challengeGold)
                 .padding(.trailing, 8)
         }
         .padding(24)

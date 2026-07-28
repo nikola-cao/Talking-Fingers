@@ -17,7 +17,7 @@ struct HintPopUpComponent: View {
             Text("Hint")
                 .font(.jakarta(size: 32))
                 .fontWeight(.semibold)
-                .foregroundColor(Color(red: 0.93, green: 0.78, blue: 0.50))
+                .foregroundColor(TFColors.sandGold)
                 .padding(.top, 10)
 
             if let gifFileName {
@@ -40,7 +40,7 @@ struct HintPopUpComponent: View {
                     .font(.jakarta(size: 20, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color(red: 159/255, green: 192/255, blue: 122/255))
+                    .background(TFColors.tfGreen)
                     .foregroundColor(.white)
                     .clipShape(Capsule())
             }

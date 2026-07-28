@@ -170,7 +170,7 @@ struct TrainingCard: View {
     private var completionTag: some View {
         Text(item.isComplete ? "Complete" : "Incomplete")
             .font(.jakarta(size: 11, weight: .medium))
-            .foregroundColor(item.isComplete ? Color(hex: "#4A7C3F") : Color.gray)
+            .foregroundColor(item.isComplete ? TFColors.forestGreen : Color.gray)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(
@@ -238,13 +238,13 @@ struct TrainingItem: Identifiable {
     var accuracyColor: Color {
         guard let acc = accuracy else { return Color.gray }
         if acc >= 80 { return TFColors.paleGreen }
-        if acc >= 60 { return Color(hex: "#FACD6B") }
+        if acc >= 60 { return TFColors.softGold }
         return Color(hex: "#FA6B6E")
     }
 
     var accuracyTextColor: Color {
         guard let acc = accuracy else { return Color.gray }
-        if acc >= 80 { return Color(hex: "#4A7C3F") }
+        if acc >= 80 { return TFColors.forestGreen }
         if acc >= 60 { return Color(hex: "#8B6914") }
         return Color(hex: "#A13B3D")
     }

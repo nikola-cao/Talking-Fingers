@@ -169,7 +169,7 @@ struct SearchView: View {
         HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(red: 248/255, green: 188/255, blue: 57/255))
+                    .fill(TFColors.gold)
                     .frame(width: 52, height: 52)
                 
                 Image(systemName: category.iconName)
@@ -190,11 +190,11 @@ struct SearchView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color(red: 255/255, green: 248/255, blue: 229/255))
+        .background(TFColors.paleCream)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(red: 248/255, green: 188/255, blue: 57/255), lineWidth: 1.5)
+                .stroke(TFColors.gold, lineWidth: 1.5)
         )
     }
     
@@ -225,11 +225,11 @@ struct SearchView: View {
             Spacer()
         }
         .padding(12)
-        .background(Color(red: 255/255, green: 248/255, blue: 229/255))
+        .background(TFColors.paleCream)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(red: 248/255, green: 188/255, blue: 57/255), lineWidth: 1.5)
+                .stroke(TFColors.gold, lineWidth: 1.5)
         )
         .contentShape(Rectangle())
     }
@@ -326,7 +326,7 @@ private struct SearchTermPracticeFlow: View {
                             .padding(.vertical, 16)
                             .background(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .fill(Color(red: 159/255, green: 192/255, blue: 122/255))
+                                    .fill(TFColors.tfGreen)
                             )
                     }
                     .buttonStyle(.plain)

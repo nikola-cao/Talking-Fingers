@@ -23,7 +23,7 @@ class LearnModeVM: ObservableObject {
 
     let flashcard: FlashcardModel
     
-    private let tfGreen = Color(red: 159/255, green: 192/255, blue: 122/255)
+    private let tfGreen = TFColors.tfGreen
     
     init(flashcard: FlashcardModel) {
         self.flashcard = flashcard

@@ -68,7 +68,7 @@ struct PracticeEntryView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(hex: "#FEF7E7"))
+                .fill(TFColors.cream)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20, style: .continuous)

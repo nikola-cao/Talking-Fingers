@@ -11,7 +11,7 @@ import SwiftUI
 
 enum OnboardingStyle {
     static let contentWidth: CGFloat = 338
-    static let textDark = Color(hex: "#464646")
+    static let textDark = TFColors.darkerGray
     static let border = Color(hex: "#E2E2E2")
 }
 

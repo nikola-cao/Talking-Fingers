@@ -202,7 +202,7 @@ struct SavedPracticeView: View {
                     title: "Sign",
                     subtitle: "Sign sentences to someone else",
                     tint: TFColors.deepGreen,
-                    backgroundTop: Color(hex: "#F4F9F1"),
+                    backgroundTop: TFColors.mintTint,
                     backgroundBottom: TFColors.paleGreen,
                     border: TFColors.practiceGreen,
                     imageAssetName: "SentencesSignFlowerPartial",
@@ -214,10 +214,10 @@ struct SavedPracticeView: View {
                 PracticeModeCard(
                     title: "Comprehend",
                     subtitle: "Understand sentences signed to you",
-                    tint: Color(hex: "#5E9ECC"),
+                    tint: TFColors.comprehensionBlue,
                     backgroundTop: TFColors.headerGradientTop,
-                    backgroundBottom: Color(hex: "#E6F1F9"),
-                    border: Color(hex: "#A5C1D8"),
+                    backgroundBottom: TFColors.comprehensionPaleBlue,
+                    border: TFColors.comprehensionBorderBlue,
                     imageAssetName: "SentencesComprehendFlowerPartial",
                     placeholderOnLeading: false
                 ) {
@@ -229,7 +229,7 @@ struct SavedPracticeView: View {
                 title: "Sign",
                 subtitle: "Sign sentences to\nsomeone else",
                 tint: TFColors.deepGreen,
-                backgroundTop: Color(hex: "#F4F9F1"),
+                backgroundTop: TFColors.mintTint,
                 backgroundBottom: TFColors.paleGreen,
                 border: TFColors.practiceGreen,
                 imageAssetName: "SentencesSignFlowerPartial",
@@ -241,10 +241,10 @@ struct SavedPracticeView: View {
             PracticeModeCard(
                 title: "Comprehend",
                 subtitle: "Understand sentences\nsigned to you",
-                tint: Color(hex: "#5E9ECC"),
+                tint: TFColors.comprehensionBlue,
                 backgroundTop: TFColors.headerGradientTop,
-                backgroundBottom: Color(hex: "#E6F1F9"),
-                border: Color(hex: "#A5C1D8"),
+                backgroundBottom: TFColors.comprehensionPaleBlue,
+                border: TFColors.comprehensionBorderBlue,
                 imageAssetName: "SentencesComprehendFlowerPartial",
                 placeholderOnLeading: false
             ) {

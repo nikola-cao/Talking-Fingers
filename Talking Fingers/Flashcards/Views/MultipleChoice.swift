@@ -42,8 +42,8 @@ struct MultipleChoice: View {
     @State private var showIncorrectPopup: Bool = false
 
     // MARK: - Brand Colors
-    private let tfGreen = Color(red: 159/255, green: 192/255, blue: 122/255)
-    private let tfGreenText = Color(red: 82/255, green: 106/255, blue: 54/255)
+    private let tfGreen = TFColors.tfGreen
+    private let tfGreenText = TFColors.tfGreenText
 
     // MARK: - Init
     init(
@@ -69,7 +69,7 @@ struct MultipleChoice: View {
     // MARK: - Body
     var body: some View {
         ZStack {
-            Color(hex: 0xFFFFFF).ignoresSafeArea()
+            TFColors.white.ignoresSafeArea()
 
             VStack(spacing: 0) {
 
@@ -103,7 +103,7 @@ struct MultipleChoice: View {
                 }
                 .frame(maxWidth: .infinity)
             }
-            .background(Color(hex: 0xFFFFFF))
+            .background(TFColors.white)
             #if os(iOS)
             .toolbar(.hidden, for: .navigationBar)
             #endif
@@ -170,10 +170,10 @@ struct MultipleChoice: View {
                     ZStack(alignment: .leading) {
 
                         Capsule()
-                            .fill(Color(red: 0.88, green: 0.92, blue: 0.96))
+                            .fill(TFColors.trackBlueLight)
 
                         Capsule()
-                            .fill(Color(red: 0.30, green: 0.55, blue: 0.85))
+                            .fill(TFColors.tabBlue)
                             .frame(width: geo.size.width * CGFloat(progress))
                     }
                 }
@@ -316,7 +316,7 @@ struct MultipleChoice: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         isSelected
-                        ? Color(red: 0.93, green: 0.78, blue: 0.50)
+                        ? TFColors.sandGold
                         : Color.white
                     )
             )
@@ -454,7 +454,7 @@ private struct ResultCard: View {
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(isCorrect
-                                  ? Color(red: 0.56, green: 0.72, blue: 0.44)
+                                  ? TFColors.lightGreen
                                   : Color.red.opacity(0.8))
                     )
             }

@@ -52,7 +52,7 @@ struct EndCardComponent: View {
                     .resizable()
                     .scaledToFit()
                     .frame(height: 120)
-                    .foregroundColor(isLearnMode ? Color(red: 0.56, green: 0.72, blue: 0.44) : .black)
+                    .foregroundColor(isLearnMode ? TFColors.lightGreen : .black)
             }
             
             if case .learn(let cat) = context {
@@ -62,7 +62,7 @@ struct EndCardComponent: View {
                 
                 Text("Unlocked!")
                     .font(.jakarta(size: 35, weight: .bold))
-                    .foregroundColor(Color(red: 0.93, green: 0.78, blue: 0.50))
+                    .foregroundColor(TFColors.sandGold)
                 
             } else {
                 Text("Congrats!")
@@ -75,7 +75,7 @@ struct EndCardComponent: View {
                             .foregroundColor(.black.opacity(0.8))
                         Text("\(cat.displayName)!")
                             .font(.jakarta(size: 31, weight: .bold))
-                            .foregroundColor(Color(red: 0.93, green: 0.78, blue: 0.50))
+                            .foregroundColor(TFColors.sandGold)
                     }
                 }
                 
@@ -86,7 +86,7 @@ struct EndCardComponent: View {
                     .foregroundColor(.black.opacity(0.8))
                 
                 ProgressView(value: 1.0)
-                    .tint(Color(red: 0.30, green: 0.55, blue: 0.85))
+                    .tint(TFColors.tabBlue)
                     .scaleEffect(y: 1.5)
                     .padding(.horizontal, 60)
             }
@@ -100,14 +100,14 @@ struct EndCardComponent: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, buttonVerticalPadding)
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Color(red: 0.56, green: 0.72, blue: 0.44)))
+                        .background(RoundedRectangle(cornerRadius: 16).fill(TFColors.lightGreen))
                 }
                 .buttonStyle(.plain)
                 .padding(.horizontal, 40)
             }
             
             Button(action: onGoHome) {
-                let myColor = Color(red: 0.30, green: 0.55, blue: 0.30)
+                let myColor = TFColors.darkGreenText
                 Text("Go Home")
                     .font(.jakartaHeadline)
                     .foregroundColor(isLearnMode ? myColor : .white)
@@ -115,7 +115,7 @@ struct EndCardComponent: View {
                     .padding(.vertical, buttonVerticalPadding)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(isLearnMode ? Color(red: 0.56, green: 0.72, blue: 0.44).opacity(0.25) : Color(red: 0.56, green: 0.72, blue: 0.44))
+                            .fill(isLearnMode ? TFColors.lightGreen.opacity(0.25) : TFColors.lightGreen)
                     )
             }
             .buttonStyle(.plain)

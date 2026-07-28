@@ -14,7 +14,7 @@ struct ComprehensionAnswerFeedbackOverlay: View {
     var onContinue: () -> Void
 
     private var textAccent: Color {
-        isCorrect ? TFColors.deepGreen : Color(hex: "#EF1013")
+        isCorrect ? TFColors.deepGreen : TFColors.alertRed
     }
 
     private var continueButtonColor: Color {
