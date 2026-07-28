@@ -66,81 +66,18 @@ struct SentenceCompletionOverlay: View {
     private var overlayBackground: Color { tier.background }
     private var titleText: String { tier.title }
 
-    @ViewBuilder
     var body: some View {
-        #if os(macOS)
-        macBanner
-        #else
-        iosSheet
-        #endif
-    }
-
-    private var overlayContent: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: roundedScore >= 75 ? "checkmark.circle.fill" : "xmark.circle.fill")
-                    .font(.jakarta(size: 24, weight: .semibold))
-                Text(titleText)
-                    .font(.jakarta(size: 24, weight: .semibold))
-            }
-            .foregroundColor(textAccent)
-
+        BottomFeedbackOverlay(
+            isPositive: roundedScore >= 75,
+            title: titleText,
+            textAccent: textAccent,
+            buttonColor: continueButtonColor,
+            background: overlayBackground,
+            onContinue: onContinue
+        ) {
             Text("Accuracy: \(roundedScore)%")
                 .font(.jakarta(size: 17, weight: .regular))
                 .foregroundColor(textAccent)
-
-            Button(action: onContinue) {
-                Text("Continue")
-                    .font(.jakarta(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(continueButtonColor)
-                    .clipShape(RoundedRectangle(cornerRadius: 50, style: .continuous))
-            }
-            .buttonStyle(.plain)
-            .padding(.bottom, 20)
         }
     }
-
-    private var iosSheet: some View {
-        overlayContent
-        .padding(.horizontal, 16)
-        .padding(.top, 16)
-        // Inset content from the home indicator; the fill extends under it (see below).
-        .safeAreaPadding(.bottom, 12)
-        .frame(maxWidth: .infinity, alignment: .top)
-        .background(alignment: .bottom) {
-            overlayBackground
-                .ignoresSafeArea(edges: .bottom)
-
-            UnevenRoundedRectangle(
-                cornerRadii: RectangleCornerRadii(
-                    topLeading: 26,
-                    bottomLeading: 0,
-                    bottomTrailing: 0,
-                    topTrailing: 26
-                ),
-                style: .continuous
-            )
-            .fill(overlayBackground)
-        }
-        .ignoresSafeArea(edges: .bottom)
-    }
-
-    #if os(macOS)
-    private var macBanner: some View {
-        overlayContent
-            .padding(.horizontal, 18)
-            .padding(.top, 16)
-            .padding(.bottom, 0)
-            .frame(maxWidth: 760, alignment: .top)
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(overlayBackground)
-            )
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
-    }
-    #endif
 }

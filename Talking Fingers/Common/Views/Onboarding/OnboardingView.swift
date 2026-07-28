@@ -59,15 +59,7 @@ struct ObWelcomeView: View {
             WelcomeGradientBackground()
 
             VStack(alignment: .leading) {
-                Text("Welcome to")
-                    .font(.jakarta(size: 40, weight: .regular))
-                    .foregroundColor(OnboardingStyle.textDark)
-                Text("Talking Fingers")
-                    .font(.jakarta(size: 48, weight: .bold))
-                    .foregroundColor(OnboardingStyle.textDark)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .frame(alignment: .leading)
+                ObWelcomeHeader()
                 OnboardingPrimaryButton(title: "Get Started", action: onNext)
             }
             .frame(maxWidth: OnboardingStyle.contentWidth, alignment: .leading)
@@ -90,15 +82,7 @@ struct ObSetupView: View {
         ScrollView {
             VStack {
                 VStack(alignment: .leading) {
-                    Text("Welcome to")
-                        .font(.jakarta(size: 40, weight: .regular))
-                        .foregroundColor(OnboardingStyle.textDark)
-                    Text("Talking Fingers")
-                        .font(.jakarta(size: 48, weight: .bold))
-                        .foregroundColor(OnboardingStyle.textDark)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                        .frame(alignment: .leading)
+                    ObWelcomeHeader()
                 }
                 .frame(maxWidth: OnboardingStyle.contentWidth, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .center)

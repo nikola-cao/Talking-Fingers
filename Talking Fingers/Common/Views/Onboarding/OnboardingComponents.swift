@@ -15,6 +15,21 @@ enum OnboardingStyle {
     static let border = Color(hex: "#E2E2E2")
 }
 
+/// "Welcome to / Talking Fingers" heading shared by the welcome and setup pages.
+struct ObWelcomeHeader: View {
+    var body: some View {
+        Text("Welcome to")
+            .font(.jakarta(size: 40, weight: .regular))
+            .foregroundColor(OnboardingStyle.textDark)
+        Text("Talking Fingers")
+            .font(.jakarta(size: 48, weight: .bold))
+            .foregroundColor(OnboardingStyle.textDark)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .frame(alignment: .leading)
+    }
+}
+
 /// Pale green backdrop with the two blurred radial gradients from the welcome page.
 struct WelcomeGradientBackground: View {
     var body: some View {

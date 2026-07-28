@@ -22,6 +22,20 @@ struct SignHintSheetView: View {
         Term.from(word)?.defaultGifFileName
     }
 
+    /// Gray placeholder shown when a GIF or the camera is unavailable.
+    /// Callers add their own frame/clip.
+    private func placeholderPanel(icon: String, iconSize: CGFloat, text: String) -> some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.jakarta(size: iconSize))
+                .foregroundColor(TFColors.lightGray)
+            Text(text)
+                .font(.jakarta(size: 15, weight: .medium))
+                .foregroundColor(TFColors.textGray)
+                .multilineTextAlignment(.center)
+        }
+    }
+
     var body: some View {
         #if os(macOS)
         macOSBody
@@ -97,17 +111,9 @@ struct SignHintSheetView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(TFColors.nearWhite)
             } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "hand.raised.fingers.spread")
-                        .font(.jakarta(size: 48))
-                        .foregroundColor(TFColors.lightGray)
-                    Text("Sign demonstration\nnot available")
-                        .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(TFColors.textGray)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(TFColors.placeholderGray)
+                placeholderPanel(icon: "hand.raised.fingers.spread", iconSize: 48, text: "Sign demonstration\nnot available")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(TFColors.placeholderGray)
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
@@ -123,17 +129,9 @@ struct SignHintSheetView: View {
             if hintCameraVM.isAuthorized {
                 CameraPreviewView(session: hintCameraVM.session, isMirrored: hintCameraVM.isMirrored)
             } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "camera.fill")
-                        .font(.jakarta(size: 36))
-                        .foregroundColor(TFColors.lightGray)
-                    Text("Camera not available")
-                        .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(TFColors.textGray)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(TFColors.placeholderGray)
+                placeholderPanel(icon: "camera.fill", iconSize: 36, text: "Camera not available")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(TFColors.placeholderGray)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -210,19 +208,11 @@ struct SignHintSheetView: View {
     }
 
     private var placeholderGifView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "hand.raised.fingers.spread")
-                .font(.jakarta(size: 48))
-                .foregroundColor(TFColors.lightGray)
-            Text("Sign demonstration\nnot available")
-                .font(.jakarta(size: 15, weight: .medium))
-                .foregroundColor(TFColors.textGray)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .background(TFColors.placeholderGray)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        placeholderPanel(icon: "hand.raised.fingers.spread", iconSize: 48, text: "Sign demonstration\nnot available")
+            .frame(maxWidth: .infinity)
+            .frame(height: 200)
+            .background(TFColors.placeholderGray)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     @ViewBuilder
@@ -235,16 +225,9 @@ struct SignHintSheetView: View {
                 CameraPreviewView(session: hintCameraVM.session, isMirrored: hintCameraVM.isMirrored)
                 #endif
             } else {
-                VStack(spacing: 12) {
-                    Image(systemName: "camera.fill")
-                        .font(.jakarta(size: 36))
-                        .foregroundColor(TFColors.lightGray)
-                    Text("Camera not available")
-                        .font(.jakarta(size: 15, weight: .medium))
-                        .foregroundColor(TFColors.textGray)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(TFColors.placeholderGray)
+                placeholderPanel(icon: "camera.fill", iconSize: 36, text: "Camera not available")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(TFColors.placeholderGray)
             }
         }
         .frame(maxWidth: .infinity)
