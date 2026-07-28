@@ -103,13 +103,7 @@ struct AddWidgetCardView: View {
                 }
             }
             .padding()
-            .background(TFColors.white)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(TFColors.border, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+            .profileCardChrome()
 
             // Plus button
             Button(action: onAdd) {

@@ -156,16 +156,10 @@ struct ProfileWidgetsView: View {
                         .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(TFColors.black)
 
-                    Button(action: { authVM.signOut(); onClose() }) {
-                        Text("Log Out")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(TFColors.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.red)
-                            .clipShape(Capsule())
+                    ProfileLogOutButton {
+                        authVM.signOut()
+                        onClose()
                     }
-                    .buttonStyle(.plain)
                 }
                 .padding(16)
             }
@@ -176,95 +170,24 @@ struct ProfileWidgetsView: View {
     }
 
     private var actionRow: some View {
-        HStack {
-            if isEditMode {
-                Button(action: { mode = .add }) {
-                    Text("Add Widgets")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(TFColors.black)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(TFColors.pill)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                Spacer()
-                Button(action: { mode = .regular }) {
-                    Text("Done")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(TFColors.black)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(TFColors.pill)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button(action: { mode = .edit }) {
-                    Text("Edit Widgets")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(TFColors.black)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(TFColors.pill)
-                        .clipShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                Spacer()
-                Text(formattedToday)
-                    .font(.subheadline)
-                    .foregroundStyle(TFColors.darkerGray)
-            }
-        }
+        ProfileActionRow(
+            isEditing: isEditMode,
+            onAdd: { mode = .add },
+            onDone: { mode = .regular },
+            onEdit: { mode = .edit }
+        )
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
     }
 
-    private struct WidgetRow: Identifiable {
-        enum Kind {
-            case single(ProfileWidget)
-            case pair(ProfileWidget, ProfileWidget)
-        }
-
-        let id: String
-        let kind: Kind
+    private var widgetRows: [ProfileWidgetRow] {
+        buildProfileWidgetRows(
+            from: vm.displayedWidgets.sorted(by: { $0.order < $1.order }),
+            pairEitherOrder: false
+        )
     }
 
-    private var widgetRows: [WidgetRow] {
-        buildWidgetRows(from: vm.displayedWidgets.sorted(by: { $0.order < $1.order }))
-    }
-
-    private func buildWidgetRows(from widgets: [ProfileWidget]) -> [WidgetRow] {
-        var rows: [WidgetRow] = []
-        var i = 0
-
-        while i < widgets.count {
-            let w = widgets[i]
-
-            if w.type == .streak, i + 1 < widgets.count, widgets[i + 1].type == .wordsLearned {
-                let left = w
-                let right = widgets[i + 1]
-                rows.append(
-                    WidgetRow(
-                        id: "pair:\(left.id.uuidString):\(right.id.uuidString)",
-                        kind: .pair(left, right)
-                    )
-                )
-                i += 2
-                continue
-            }
-
-            rows.append(WidgetRow(id: "single:\(w.id.uuidString)", kind: .single(w)))
-            i += 1
-        }
-
-        return rows
-    }
-
-    private func expandedWidgets(from rows: [WidgetRow]) -> [ProfileWidget] {
+    private func expandedWidgets(from rows: [ProfileWidgetRow]) -> [ProfileWidget] {
         var out: [ProfileWidget] = []
         out.reserveCapacity(rows.count * 2)
 
@@ -300,13 +223,6 @@ struct ProfileWidgetsView: View {
     private func remove(_ widget: ProfileWidget) {
         guard let index = vm.displayedWidgets.firstIndex(where: { $0.id == widget.id }) else { return }
         vm.removeWidget(at: IndexSet([index]))
-    }
-
-    private var formattedToday: String {
-        let formatter = DateFormatter()
-        formatter.locale = Locale.current
-        formatter.dateFormat = "EEEE, MMMM d"
-        return formatter.string(from: Date())
     }
 }
 

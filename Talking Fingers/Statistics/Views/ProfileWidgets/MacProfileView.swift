@@ -112,16 +112,10 @@ struct MacProfileView: View {
                         .font(.jakarta(size: 14, weight: .regular))
                         .foregroundStyle(TFColors.black)
                         .lineLimit(1)
-                    Button(action: { authVM.signOut(); showingSettings = false }) {
-                        Text("Log Out")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(TFColors.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
-                            .background(Color.red)
-                            .clipShape(Capsule())
+                    ProfileLogOutButton {
+                        authVM.signOut()
+                        showingSettings = false
                     }
-                    .buttonStyle(.plain)
                 }
                 .padding(16)
             }
@@ -234,45 +228,16 @@ struct MacProfileView: View {
     // MARK: - Action row
 
     private var actionRow: some View {
-        HStack {
-            if isEditing {
-                pillButton(title: "Add Widgets") { showingAddWidgets = true }
-                Spacer()
-                pillButton(title: "Done") {
-                    withAnimation(.easeInOut(duration: 0.2)) { isEditing = false }
-                }
-            } else {
-                pillButton(title: "Edit Widgets") {
-                    withAnimation(.easeInOut(duration: 0.2)) { isEditing = true }
-                }
-                Spacer()
-                Text(formattedToday)
-                    .font(.jakarta(size: 14, weight: .semibold))
-                    .foregroundStyle(TFColors.textDark)
+        ProfileActionRow(
+            isEditing: isEditing,
+            onAdd: { showingAddWidgets = true },
+            onDone: {
+                withAnimation(.easeInOut(duration: 0.2)) { isEditing = false }
+            },
+            onEdit: {
+                withAnimation(.easeInOut(duration: 0.2)) { isEditing = true }
             }
-        }
-    }
-
-    private func pillButton(title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.jakarta(size: 13, weight: .semibold))
-                .foregroundStyle(TFColors.black)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(TFColors.pill)
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().stroke(TFColors.border, lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var formattedToday: String {
-        let f = DateFormatter()
-        f.dateFormat = "EEEE, MMMM d"
-        return f.string(from: Date())
+        )
     }
 
     // MARK: - Column assignment (persisted overrides + type default)
@@ -335,7 +300,7 @@ struct MacProfileView: View {
     @ViewBuilder
     private var leftColumn: some View {
         VStack(spacing: 14) {
-            let rows = buildLeftRows(from: leftWidgets)
+            let rows = buildProfileWidgetRows(from: leftWidgets, pairEitherOrder: true)
             ForEach(rows, id: \.id) { row in
                 switch row.kind {
                 case .pair(let a, let b):
@@ -489,37 +454,6 @@ struct MacProfileView: View {
         }
     }
 
-    // MARK: - Left column pairing logic
-
-    private struct LeftRow: Identifiable {
-        enum Kind {
-            case single(ProfileWidget)
-            case pair(ProfileWidget, ProfileWidget)
-        }
-        let id: String
-        let kind: Kind
-    }
-
-    private func buildLeftRows(from widgets: [ProfileWidget]) -> [LeftRow] {
-        var rows: [LeftRow] = []
-        var i = 0
-        while i < widgets.count {
-            let w = widgets[i]
-            if w.type == .streak, i + 1 < widgets.count, widgets[i + 1].type == .wordsLearned {
-                let right = widgets[i + 1]
-                rows.append(LeftRow(id: "pair-\(w.id)-\(right.id)", kind: .pair(w, right)))
-                i += 2
-            } else if w.type == .wordsLearned, i + 1 < widgets.count, widgets[i + 1].type == .streak {
-                let right = widgets[i + 1]
-                rows.append(LeftRow(id: "pair-\(w.id)-\(right.id)", kind: .pair(w, right)))
-                i += 2
-            } else {
-                rows.append(LeftRow(id: "single-\(w.id)", kind: .single(w)))
-                i += 1
-            }
-        }
-        return rows
-    }
 }
 
 // MARK: - Drag/drop reorder helper
