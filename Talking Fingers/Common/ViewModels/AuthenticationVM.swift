@@ -92,18 +92,11 @@ class AuthenticationViewModel {
 
             let newUser = User(userId: authUser.uid, name: name, email: email, handedness: normalizedHandedness)
 
-            var userData: [String: Any] = [
-                "userId": newUser.userId,
-                "name": newUser.name,
-                "email": newUser.email,
-                "streakCount": 0,
-                "profileUpdatedAt": Timestamp(date: Date())
-            ]
-            if let normalizedHandedness {
-                userData["handedness"] = normalizedHandedness
-            }
             do {
-                try await Firebase.db.collection("Users").document(newUser.userId).setData(userData)
+                // Writes the same fields the manual payload used to
+                // (userId/name/email/streakCount 0/profileUpdatedAt now,
+                // + handedness when set).
+                try await UserProfileService().uploadProfile(for: newUser)
             } catch {
                 // Profile doc is re-uploaded by the next profile sync; don't block sign-in on it.
                 print("Error saving user profile: \(error)")
@@ -167,19 +160,19 @@ class AuthenticationViewModel {
 
     private func loadCurrentUserProfile(for authUser: FirebaseAuth.User, fallbackEmail: String? = nil, isLoggingIn: Bool) async {
         do {
-            let document = try await Firebase.db.collection("Users").document(authUser.uid).getDocument()
+            let document = try await Firebase.users.document(authUser.uid).getDocument()
             let data = document.data()
-            let handedness = normalizeHandedness(data?["handedness"] as? String)
+            let handedness = normalizeHandedness(data?[UserFields.handedness] as? String)
 
             let hydratedUser = User(
                 userId: authUser.uid,
-                name: (data?["name"] as? String) ?? authUser.displayName ?? "",
-                email: (data?["email"] as? String) ?? authUser.email ?? fallbackEmail ?? "",
+                name: (data?[UserFields.name] as? String) ?? authUser.displayName ?? "",
+                email: (data?[UserFields.email] as? String) ?? authUser.email ?? fallbackEmail ?? "",
                 handedness: handedness
             )
-            hydratedUser.streakCount = data?["streakCount"] as? Int ?? 0
-            hydratedUser.lastActivity = (data?["lastActivity"] as? Timestamp)?.dateValue()
-            hydratedUser.profileUpdatedAt = (data?["profileUpdatedAt"] as? Timestamp)?.dateValue()
+            hydratedUser.streakCount = data?[UserFields.streakCount] as? Int ?? 0
+            hydratedUser.lastActivity = (data?[UserFields.lastActivity] as? Timestamp)?.dateValue()
+            hydratedUser.profileUpdatedAt = (data?[UserFields.profileUpdatedAt] as? Timestamp)?.dateValue()
 
             DispatchQueue.main.async {
                 self.currentUser = hydratedUser

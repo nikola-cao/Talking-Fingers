@@ -23,24 +23,24 @@ final class UserProfileService {
 
     private var userDocument: DocumentReference? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
-        return db.collection("Users").document(uid)
+        return Firebase.users.document(uid)
     }
 
     func uploadProfile(for user: User) async throws {
         guard let document = userDocument else { return }
 
         var data: [String: Any] = [
-            "userId": user.userId,
-            "name": user.name,
-            "email": user.email,
-            "streakCount": user.streakCount,
-            "profileUpdatedAt": Timestamp(date: user.profileUpdatedAt ?? Date())
+            UserFields.userId: user.userId,
+            UserFields.name: user.name,
+            UserFields.email: user.email,
+            UserFields.streakCount: user.streakCount,
+            UserFields.profileUpdatedAt: Timestamp(date: user.profileUpdatedAt ?? Date())
         ]
         if let handedness = user.handedness {
-            data["handedness"] = handedness
+            data[UserFields.handedness] = handedness
         }
         if let lastActivity = user.lastActivity {
-            data["lastActivity"] = Timestamp(date: lastActivity)
+            data[UserFields.lastActivity] = Timestamp(date: lastActivity)
         }
         try await document.setData(data, merge: true)
     }
@@ -48,10 +48,10 @@ final class UserProfileService {
     func uploadHandedness(_ handedness: String?) async throws {
         guard let document = userDocument else { return }
         var data: [String: Any] = [
-            "profileUpdatedAt": Timestamp(date: Date())
+            UserFields.profileUpdatedAt: Timestamp(date: Date())
         ]
         if let handedness {
-            data["handedness"] = handedness
+            data[UserFields.handedness] = handedness
         }
         try await document.setData(data, merge: true)
     }
@@ -63,12 +63,12 @@ final class UserProfileService {
         guard let data = snapshot.data() else { return nil }
 
         return RemoteProfile(
-            name: data["name"] as? String ?? "",
-            email: data["email"] as? String ?? "",
-            handedness: data["handedness"] as? String,
-            streakCount: data["streakCount"] as? Int ?? 0,
-            lastActivity: (data["lastActivity"] as? Timestamp)?.dateValue(),
-            profileUpdatedAt: (data["profileUpdatedAt"] as? Timestamp)?.dateValue()
+            name: data[UserFields.name] as? String ?? "",
+            email: data[UserFields.email] as? String ?? "",
+            handedness: data[UserFields.handedness] as? String,
+            streakCount: data[UserFields.streakCount] as? Int ?? 0,
+            lastActivity: (data[UserFields.lastActivity] as? Timestamp)?.dateValue(),
+            profileUpdatedAt: (data[UserFields.profileUpdatedAt] as? Timestamp)?.dateValue()
         )
     }
 }

@@ -38,7 +38,7 @@ final class FlashcardsServices {
     /// and the app operates on local data only.
     private var progressCollection: CollectionReference? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
-        return db.collection("Users").document(uid).collection("cardProgress")
+        return Firebase.users.document(uid).collection("cardProgress")
     }
 
     /// Uploads the user's progress for the given cards in a single batched write.
