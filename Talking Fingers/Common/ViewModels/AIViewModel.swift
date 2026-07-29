@@ -10,9 +10,14 @@ import Observation
 import FirebaseFirestore
 
 @Observable class AIViewModel {
-    var openAIKey: String?
+    var apiKey: String?
     private var db: Firestore { Firebase.db }
-    private let openAIURL = "https://api.openai.com/v1/chat/completions"
+    private let anthropicURL = "https://api.anthropic.com/v1/messages"
+    private let anthropicVersion = "2023-06-01"
+    private let model = "claude-opus-5"
+    /// Generous headroom: max_tokens caps thinking + response text together,
+    /// and thinking is on by default on this model.
+    private let maxTokens = 8000
     private let requestedSentenceCount = 7
     private let targetValidSentenceCount = 5
     
@@ -27,10 +32,10 @@ import FirebaseFirestore
     private func fetchAPIKey() {
         Task {
             do {
-                let document = try await db.collection("API_KEYS").document("OpenAi").getDocument()
+                let document = try await db.collection("API_KEYS").document("Anthropic").getDocument()
                 if let data = document.data(), let key = data["key"] as? String {
                     await MainActor.run {
-                        self.openAIKey = key
+                        self.apiKey = key
                         print("key found")
                     }
                 } else {
@@ -49,17 +54,17 @@ import FirebaseFirestore
         let deadline = Date().addingTimeInterval(timeout)
         let pollInterval: UInt64 = 100_000_000 // 100ms in nanoseconds
         
-        while openAIKey == nil && Date() < deadline {
+        while apiKey == nil && Date() < deadline {
             try await Task.sleep(nanoseconds: pollInterval)
         }
-        
-        guard openAIKey != nil else {
+
+        guard apiKey != nil else {
             throw AIError.missingAPIKey
         }
     }
 
     func generateAISentences(from flashcards: [FlashcardModel], focusTerms: [Term] = []) async throws -> [AISentenceModel] {
-        guard let apiKey = openAIKey else {
+        guard let apiKey else {
             throw AIError.missingAPIKey
         }
         
@@ -76,59 +81,106 @@ import FirebaseFirestore
         )
     }
     
+    /// JSON Schema the model's response is constrained to. Every object needs
+    /// `required` plus `additionalProperties: false` for structured outputs.
+    private var sentenceSchema: [String: Any] {
+        [
+            "type": "object",
+            "properties": [
+                "sentences": [
+                    "type": "array",
+                    "items": [
+                        "type": "object",
+                        "properties": [
+                            "english": [
+                                "type": "string",
+                                "description": "A natural, readable English sentence."
+                            ],
+                            "sentence": [
+                                "type": "string",
+                                "description": "The ASL gloss, using only allowed vocabulary."
+                            ]
+                        ],
+                        "required": ["english", "sentence"],
+                        "additionalProperties": false
+                    ]
+                ]
+            ],
+            "required": ["sentences"],
+            "additionalProperties": false
+        ]
+    }
+
     private func requestSentences(prompt: String, apiKey: String) async throws -> [SentenceData] {
         let requestBody: [String: Any] = [
-            "model": "gpt-4o",
+            "model": model,
+            "max_tokens": maxTokens,
+            "system": "You are an ASL education assistant. For each sentence return two parts: \"english\" (a natural, readable English sentence) and \"sentence\" (the ASL gloss using only allowed vocabulary). Vary phrasing, sentence length, and scenario across the set so repeated generations don't repeat themselves.",
             "messages": [
-                [
-                    "role": "system",
-                    "content": "You are an ASL education assistant. For each sentence return two parts: \"english\" (a natural, readable English sentence) and \"sentence\" (the ASL gloss using only allowed vocabulary). Return ONLY valid JSON, no markdown."
-                ],
                 ["role": "user", "content": prompt]
             ],
-            "temperature": 0.9,
-            "response_format": ["type": "json_object"]
+            "output_config": [
+                "effort": "low",
+                "format": [
+                    "type": "json_schema",
+                    "schema": sentenceSchema
+                ]
+            ]
         ]
-        
+
         guard let jsonData = try? JSONSerialization.data(withJSONObject: requestBody) else {
             throw AIError.invalidRequest
         }
-        
-        var request = URLRequest(url: URL(string: openAIURL)!)
+
+        var request = URLRequest(url: URL(string: anthropicURL)!)
         request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(anthropicVersion, forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = jsonData
-        
+
         let (data, response) = try await URLSession.shared.data(for: request)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw AIError.apiError
         }
-        
+
         guard httpResponse.statusCode == 200 else {
-            print("OpenAI API Error - Status Code: \(httpResponse.statusCode)")
+            print("Anthropic API Error - Status Code: \(httpResponse.statusCode)")
             if let errorString = String(data: data, encoding: .utf8) {
                 print("Error response: \(errorString)")
             }
             throw AIError.apiError
         }
-        
-        let openAIResponse = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-        guard let content = openAIResponse.choices.first?.message.content else {
+
+        let anthropicResponse = try JSONDecoder().decode(AnthropicResponse.self, from: data)
+
+        // A refusal or a truncated response won't satisfy the schema — fail
+        // loudly rather than handing back a half-parsed sentence list.
+        if anthropicResponse.stopReason == "refusal" {
+            print("Request was refused: \(anthropicResponse.stopDetails?.explanation ?? "no explanation")")
+            throw AIError.refused
+        }
+        if anthropicResponse.stopReason == "max_tokens" {
+            print("Response hit max_tokens (\(maxTokens)) and was truncated.")
             throw AIError.emptyResponse
         }
-        
+
+        // `content` is a list of blocks; thinking blocks precede the text block.
+        guard let content = anthropicResponse.content.first(where: { $0.type == "text" })?.text else {
+            throw AIError.emptyResponse
+        }
+
         guard let contentData = content.data(using: .utf8) else {
             throw AIError.decodingError
         }
-        
+
         do {
             let wrapper = try JSONDecoder().decode(SentencesWrapper.self, from: contentData)
             return wrapper.sentences
         } catch {
             print("❌ DECODING ERROR:")
-            print("Raw content from OpenAI:")
+            print("Raw content from Claude:")
             print(content)
             print("Decoding error: \(error)")
             throw AIError.decodingError
@@ -222,15 +274,27 @@ import FirebaseFirestore
 
 // MARK: - Response Models
 
-private struct OpenAIResponse: Codable {
-    let choices: [Choice]
-    
-    struct Choice: Codable {
-        let message: Message
+private struct AnthropicResponse: Codable {
+    let content: [ContentBlock]
+    let stopReason: String?
+    let stopDetails: StopDetails?
+
+    enum CodingKeys: String, CodingKey {
+        case content
+        case stopReason = "stop_reason"
+        case stopDetails = "stop_details"
     }
-    
-    struct Message: Codable {
-        let content: String
+
+    struct ContentBlock: Codable {
+        let type: String
+        /// Only present on `text` blocks.
+        let text: String?
+    }
+
+    /// Populated only when `stopReason == "refusal"`.
+    struct StopDetails: Codable {
+        let category: String?
+        let explanation: String?
     }
 }
 
@@ -253,4 +317,5 @@ enum AIError: Error {
     case apiError
     case emptyResponse
     case decodingError
+    case refused
 }
