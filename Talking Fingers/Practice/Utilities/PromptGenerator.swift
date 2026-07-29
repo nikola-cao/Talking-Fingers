@@ -97,12 +97,28 @@ struct PromptGenerator {
 
         【ASL GLOSSING RULES】
          No "is/am/are/the/a/to".
-         Use ME for the first-person pronoun in gloss, never I. Only use I when it is the literal alphabet letter inside a finger-spelled word/name (for example "I A N").
-         Questions: Put the question word (WHAT, WHERE, WHO) at the END.
+         Pronouns: use the SUBJECT form (ME, YOU, HE, SHE, IT, WE, THEY) for subjects and objects,
+         and the POSSESSIVE form (MY, YOUR, HIS, HER, ITS, OUR, THEIR) before a noun that is owned.
+         These are different signs, not interchangeable.
+            Right: "MY NAME J O H N"    Wrong: "ME NAME J O H N"
+            Right: "ME LIKE MY DOG"     Wrong: "MY LIKE ME DOG"
+         Never use I as a pronoun — use ME. Only use I when it is the literal alphabet letter
+         inside a finger-spelled word/name (for example "I A N").
+         Hyphenated tokens are SINGLE fixed signs, not word combinations. Use them whole.
+         The word-order and adjective rules below do NOT apply inside a hyphenated token.
+            Right: "GOOD-MORNING"       Wrong: "GOOD MORNING" or "MORNING GOOD"
+            Right: "NICE-MEET-YOU"      Wrong: "MEET YOU NICE"
+            Right: "DON’T-LIKE"         Wrong: "LIKE DON’T"
+         Word order: simple sentences use plain subject-verb-object order. Front an object as the
+         topic ONLY when the sentence genuinely emphasizes or contrasts it — topicalization relies
+         on facial grammar that gloss cannot show, so the plain order is the default.
+            Default: "ME WANT WATER"    Not the default: "WATER, ME WANT"
+         Time words still come first when present: "YESTERDAY, ME GO STORE".
+         Questions: Put the question word (WHAT, WHO, WHEN, WHY, HOW) at the END.
             Wrong: "WHAT YOUR NAME?"
             Right: "YOUR NAME WHAT?"
          Adjectives: Put them AFTER the noun.
-            Right: "APPLE RED"
+            Right: "BOOK NEW"
 
         【TARGET WORD GOALS】
          Create sentences that balance new/learning words with mastered words
@@ -118,23 +134,28 @@ struct PromptGenerator {
         The English sentence and the gloss must express the SAME meaning. Think of a clear, realistic scenario, write it in normal English, then convert to gloss using only allowed words.
 
         【FEW-SHOT EXAMPLES】
-        Input: [APPLE, STORE, GO, ME, WANT, BUY, YESTERDAY, HAPPY]
+        Every gloss token below comes from the allowed vocabulary. Do the same — never invent a token.
+        Input: [WATER, STORE, GO, ME, MY, WANT, YESTERDAY, HAPPY, MOTHER, BOOK, NEW, GOOD-MORNING]
         Output:
         [
-          {"english": "I want an apple.", "sentence": "APPLE, ME WANT"},
-          {"english": "I went to the store to buy an apple.", "sentence": "YESTERDAY, ME GO STORE, BUY APPLE"},
-          {"english": "My friend is happy and I am happy too.", "sentence": "FRIEND HAPPY, ME HAPPY"}
+          {"english": "I want water.", "sentence": "ME WANT WATER"},
+          {"english": "I went to the store yesterday.", "sentence": "YESTERDAY, ME GO STORE"},
+          {"english": "My mother is happy.", "sentence": "MY MOTHER HAPPY"},
+          {"english": "I have a new book.", "sentence": "MY BOOK NEW"},
+          {"english": "Good morning!", "sentence": "GOOD-MORNING"}
         ]
 
         【ALLOWED GLOSS VOCAB】
-        You may ONLY use these tokens in the gloss (\"sentence\"):
+        You may ONLY use these tokens in the gloss (\"sentence\"). Copy them exactly as written —
+        a hyphenated entry (GOOD-MORNING, SEE-YOU-LATER, NICE-MEET-YOU, HOW-YOU, WHAT-UP, DON’T-LIKE)
+        is one token and must be used whole, never split into separate words.
         \(allowedTerms.map { $0.rawValue }.sorted().joined(separator: ", "))
         The focus terms listed above MUST appear frequently across the \(sentenceCount) sentences, but you can also use other tokens from this list.
 
         【CRITICAL RULES】
         1. English MUST be a normal, grammatical sentence that makes sense. No random words.
         2. Gloss ("sentence") MUST use only words from the ALLOWED GLOSS VOCAB list above. ASL word order: TIME + TOPIC + COMMENT + DETAILS.
-        3. For first person, use ME in gloss. Do NOT use I unless it is the alphabet letter in a finger-spelled word/name.
+        3. Pronouns: subject forms (ME, YOU, HE, SHE, IT, WE, THEY) for subjects and objects; possessive forms (MY, YOUR, HIS, HER, ITS, OUR, THEIR) before an owned noun. Do NOT use I as a pronoun — only as the alphabet letter in a finger-spelled word/name.
         4. No repetition: a word appears at most once per sentence (EXCEPT in Alphabet-only mode, where repeating letters is allowed).
         5. One clear idea per sentence (request, event, description, etc.).
         6. DIVERSITY (very important): All 5 sentences MUST be distinct from each other. No two items may share the same English sentence, and no two items may share the same gloss token sequence. Use different scenarios, different subjects, different verbs, and different sentence lengths across the 5 items — even when a focus-term is required in every sentence, vary everything else around it.
