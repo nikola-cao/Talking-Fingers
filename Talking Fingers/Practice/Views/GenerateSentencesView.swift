@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct GenerateSentencesView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(SwiftDataVM.self) private var dataVM
     @State private var selectedCategories: Set<TermCategory> = []
     @State private var modeSelection: PracticeModeSelection
     @State private var trainingName: String = ""
@@ -152,8 +154,15 @@ struct GenerateSentencesView: View {
             errorMessage = nil
 
             do {
+                let flashcards = dataVM.fetchFlashcards()
+                // Pass the learner's raw selection (which may be empty) rather
+                // than `effectiveCategories` — an empty set has a specific
+                // meaning to VocabularyScope (fall back to studied categories,
+                // or greetings for a day-one learner) that's lost once it's
+                // pre-resolved to "all categories" here.
                 let sentences = try await SentenceGenerationService.generateSentences(
-                    categories: effectiveCategories,
+                    categories: selectedCategories,
+                    flashcards: flashcards,
                     modeSelection: modeSelection
                 )
 
@@ -225,5 +234,12 @@ struct TestGenerateSentencesView: View {
 }
 
 #Preview {
+    let schema = Schema([SavedPracticeModel.self, FlashcardModel.self])
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: schema, configurations: [config])
+    let vm = SwiftDataVM(modelContext: container.mainContext)
+
     TestGenerateSentencesView()
+        .modelContainer(container)
+        .environment(vm)
 }

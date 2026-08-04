@@ -92,6 +92,7 @@ struct SavedPracticeView: View {
                     do {
                         let more = try await SentenceGenerationService.generateSentences(
                             categories: categories,
+                            flashcards: dataVM.fetchFlashcards(),
                             modeSelection: lastModeSelection
                         )
                         await MainActor.run {

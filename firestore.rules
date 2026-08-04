@@ -13,13 +13,8 @@ service cloud.firestore {
       }
     }
 
-    // TODO: deny all reads once the OpenAI call moves behind a Cloud Function.
-    // Until then the app fetches the key at launch, so signed-in users must
-    // be able to read it. Writes are console/admin-only.
-    match /API_KEYS/{document} {
-      allow read: if request.auth != null;
-      allow write: if false;
-    }
+    // Sentence generation is now on-device (Foundation Models) or a bundled
+    // sentence bank — no API key is fetched or stored anymore.
 
     // Everything else is denied by default.
     match /{document=**} {

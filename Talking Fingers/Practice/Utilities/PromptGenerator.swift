@@ -3,214 +3,103 @@
 //  Talking Fingers
 //
 //  Created by Aimee on 2/16/26.
+//
+//  Builds the instructions and per-request prompt for the on-device
+//  (Foundation Models) sentence generator. Deliberately compact — see
+//  ON_DEVICE_SENTENCE_GENERATION_PLAN.md §5.3. Vocabulary is enforced
+//  structurally by the request's per-allowed-term `GenerationSchema` (§5.2),
+//  not spelled out in the prompt text, so there's no need to repeat a
+//  190-term vocabulary list here the way the old Claude prompt did.
 
 import Foundation
 
-struct PromptGenerator {
+enum PromptGenerator {
+    /// Stable ASL glossing rules, meant for `LanguageModelSession(instructions:)`.
+    /// Corrected in commit 03e45a2 (bad pronouns, split compound signs) —
+    /// reuse this wording, don't regress it.
+    static let glossingInstructions = """
+    You are a sign language practice sentence generator for ASL learners.
+    Generated sentences will be signed word-by-word by the user through a camera.
+    Keep sentences natural for signing — avoid idioms, complex grammar,
+    or words that don't have common ASL signs. Every gloss token you use MUST come from
+    the AllowedTerm vocabulary you were given — never invent a token.
 
-    /// Generates prompt for LLM to create ASL practice sentences
-    /// - Parameters:
-    ///   - flashcards: All user's flashcards with progress info
-    ///   - focusTerms: Specific terms to prioritize in sentences (based on selected categories)
-    /// - Returns: Formatted prompt string
-    static func generatePromptForLLM(
-        from flashcards: [FlashcardModel],
-        focusTerms: [Term] = [],
-        sentenceCount: Int = 5
+    Write the GLOSS FIRST, then write the English to match it. The English sentence must say
+    exactly what the gloss says and nothing more. If an idea cannot be built from your allowed
+    vocabulary, pick a different idea — do NOT write English about something you cannot gloss.
+    For example, if COLOR is not in your vocabulary, never write "What is your favorite color?"
+    Every meaningful word in your English sentence must correspond to a token in the gloss.
+
+    【ASL GLOSSING RULES】
+     No "is/am/are/the/a/to".
+     Pronouns: use the SUBJECT form (ME, YOU, HE, SHE, IT, WE, THEY) for subjects and objects,
+     and the POSSESSIVE form (MY, YOUR, HIS, HER, ITS, OUR, THEIR) before a noun that is owned.
+     These are different signs, not interchangeable.
+        Right: "MY NAME J O H N"    Wrong: "ME NAME J O H N"
+        Right: "ME LIKE MY DOG"     Wrong: "MY LIKE ME DOG"
+     Never use I as a pronoun — use ME. Only use I when it is the literal alphabet letter
+     inside a finger-spelled word/name (for example "I A N").
+     Names are FINGER-SPELLED: emit one token per letter, every letter, in order. A name is
+     never a single letter and never a whole word.
+        Right: "MY NAME J O H N"    Wrong: "MY NAME J" or "NAME ME J"
+        Right: "HER NAME A M Y"     Wrong: "HER NAME AMY"
+     If the alphabet letters you need are not in your allowed vocabulary, do not write a
+     sentence about someone's name at all.
+     Fixed greeting phrases keep their natural English order and are NOT reordered by the
+     adjective rule below. GOOD comes before the time word, never after it.
+        Right: "GOOD MORNING"       Wrong: "MORNING GOOD"
+        Right: "GOOD NIGHT"         Wrong: "NIGHT GOOD"
+        Right: "NICE MEET YOU"      Wrong: "MEET YOU NICE"
+     Word order: simple sentences use plain subject-verb-object order. Front an object as the
+     topic ONLY when the sentence genuinely emphasizes or contrasts it — topicalization relies
+     on facial grammar that gloss cannot show, so the plain order is the default.
+        Default: "ME WANT WATER"    Not the default: "WATER, ME WANT"
+     Time words still come first when present: "YESTERDAY, ME GO STORE".
+     Questions: Put the question word (WHAT, WHO, WHEN, WHERE, WHY, HOW) at the END.
+        Wrong: "WHAT YOUR NAME?"
+        Right: "YOUR NAME WHAT?"
+     Adjectives: Put them AFTER the noun.
+        Right: "BOOK NEW"
+
+     No repetition: a word appears at most once per sentence, except when finger-spelling.
+     One clear idea per sentence. All sentences you generate in one set must be distinct from
+     each other — no two may share the same English sentence or the same gloss token sequence.
+     The English sentence and the gloss must express the SAME meaning.
+    """
+
+    /// Per-request prompt: what to prioritize and how many sentences to produce.
+    /// The allowed vocabulary itself is enforced by the request's
+    /// `GenerationSchema`, not spelled out here.
+    static func compactPrompt(
+        focusTerms: [Term],
+        learningState: LearningStateSummary,
+        sentenceCount: Int
     ) -> String {
-        let learningAnalysis = analyzeLearningState(from: flashcards)
-        // Full app vocabulary – gloss is allowed to use ANY of these terms,
-        // but should prioritize the focusTerms (selected categories).
-        let allowedTerms = Term.allCases
-        let allowedCategories = Set(focusTerms.map { $0.category })
-        let focusCategories = allowedCategories
-        let isAlphabetOnly = !focusCategories.isEmpty && focusCategories == [.alphabet]
-        let isNumbersOnly = !focusCategories.isEmpty && focusCategories == [.numbers]
-        
         var prompt = """
-        You are a sign language practice sentence generator for ASL learners.
-        Generated sentences will be signed word-by-word by the user through a camera.
-        Keep sentences natural for signing — avoid idioms, complex grammar, 
-        or words that don't have common ASL signs.
-        
-        【USER STATE】
-        \(learningAnalysis)
-        
-        【FLASHCARDS】
+        【LEARNER STATE】
+        \(learningState.summaryLine)
+
+
         """
-        
-        for (index, flashcard) in flashcards.enumerated() {
-            prompt += "\(index+1). \(flashcard.term.rawValue) | Progress: \(flashcard.progress) | Starred: \(flashcard.starred)\n"
-        }
-        
+
         if !focusTerms.isEmpty {
-            let focusTermStrings = focusTerms.map { $0.rawValue }.joined(separator: ", ")
+            let focusTermStrings = focusTerms.map(\.rawValue).sorted().joined(separator: ", ")
             prompt += """
-            
             【FOCUS TERMS】
-            Prioritize including these terms in your sentences:
+            Prioritize including these terms in your sentences — at least one should appear in
+            most sentences, but you may also use any other term from your allowed vocabulary:
             \(focusTermStrings)
-            
+
+
             """
-            
-            if focusCategories.count == 1, let singleCategory = focusCategories.first {
-                prompt += """
-                
-                IMPORTANT: The learner selected exactly ONE category (\(singleCategory.rawValue)).
-                At least one focus-term from this category MUST appear in EVERY SINGLE sentence you generate.
-                Do not generate any sentence that omits this category entirely.
-                """
-            }
         }
-        
-        // Make category intent explicit to the model (based on selected focus terms).
-        if !focusCategories.isEmpty {
-            let cats = focusCategories.map { $0.rawValue }.sorted().joined(separator: ", ")
-            prompt += """
-            
-            【SELECTED CATEGORIES (IMPORTANT)】
-            The learner selected these categories: \(cats)
-            You MUST generate scenarios that naturally fit these categories.
-            """
-            
-            if isAlphabetOnly {
-                prompt += """
-                
-                【ALPHABET-FOCUSED MODE】
-                Strongly prioritize ALPHABET terms in both English scenarios and gloss.
-                - English should usually be about finger-spelling a name or word (e.g. \"My name is John.\", \"Your name is Amy.\").
-                - Gloss (\"sentence\") should contain sequences of letters separated by spaces (e.g. \"J O H N\"), and MAY also include other allowed vocabulary from the app if it helps the scenario.
-                - Repeating letters is allowed in this mode (e.g. \"A L L Y\").
-                """
-            } else if isNumbersOnly {
-                prompt += """
-                
-                【NUMBERS-FOCUSED MODE】
-                Strongly prioritize NUMBER terms from the vocabulary.
-                - English should describe simple number scenarios (age, quantity, time, etc.).
-                - Gloss (\"sentence\") should prominently feature the relevant number tokens and MAY also use other allowed vocabulary from the app as needed.
-                """
-            }
-        }
-        
+
         prompt += """
-
-        【ASL GLOSSING RULES】
-         No "is/am/are/the/a/to".
-         Pronouns: use the SUBJECT form (ME, YOU, HE, SHE, IT, WE, THEY) for subjects and objects,
-         and the POSSESSIVE form (MY, YOUR, HIS, HER, ITS, OUR, THEIR) before a noun that is owned.
-         These are different signs, not interchangeable.
-            Right: "MY NAME J O H N"    Wrong: "ME NAME J O H N"
-            Right: "ME LIKE MY DOG"     Wrong: "MY LIKE ME DOG"
-         Never use I as a pronoun — use ME. Only use I when it is the literal alphabet letter
-         inside a finger-spelled word/name (for example "I A N").
-         Hyphenated tokens are SINGLE fixed signs, not word combinations. Use them whole.
-         The word-order and adjective rules below do NOT apply inside a hyphenated token.
-            Right: "GOOD-MORNING"       Wrong: "GOOD MORNING" or "MORNING GOOD"
-            Right: "NICE-MEET-YOU"      Wrong: "MEET YOU NICE"
-            Right: "DON’T-LIKE"         Wrong: "LIKE DON’T"
-         Word order: simple sentences use plain subject-verb-object order. Front an object as the
-         topic ONLY when the sentence genuinely emphasizes or contrasts it — topicalization relies
-         on facial grammar that gloss cannot show, so the plain order is the default.
-            Default: "ME WANT WATER"    Not the default: "WATER, ME WANT"
-         Time words still come first when present: "YESTERDAY, ME GO STORE".
-         Questions: Put the question word (WHAT, WHO, WHEN, WHY, HOW) at the END.
-            Wrong: "WHAT YOUR NAME?"
-            Right: "YOUR NAME WHAT?"
-         Adjectives: Put them AFTER the noun.
-            Right: "BOOK NEW"
-
-        【TARGET WORD GOALS】
-         Create sentences that balance new/learning words with mastered words
-         Prioritize focus terms when provided
-         Vary sentence length: some short (3-4 words), some medium (5-6 words), some longer (7-9 words)
-         Each sentence should have at least 1-2 words the user is still learning
-
-        【TWO-PART OUTPUT】
-        Each item must have:
-        1. "english": A natural, coherent English sentence the learner reads first (plain English, normal grammar).
-        2. "sentence": The ASL gloss for signing — ONLY words from the app's taught vocabulary list below (ALLOWED GLOSS VOCAB), in ASL word order (TIME + TOPIC + COMMENT). No articles, no "is/am/are". Use commas for pauses.
-
-        The English sentence and the gloss must express the SAME meaning. Think of a clear, realistic scenario, write it in normal English, then convert to gloss using only allowed words.
-
-        【FEW-SHOT EXAMPLES】
-        Every gloss token below comes from the allowed vocabulary. Do the same — never invent a token.
-        Input: [WATER, STORE, GO, ME, MY, WANT, YESTERDAY, HAPPY, MOTHER, BOOK, NEW, GOOD-MORNING]
-        Output:
-        [
-          {"english": "I want water.", "sentence": "ME WANT WATER"},
-          {"english": "I went to the store yesterday.", "sentence": "YESTERDAY, ME GO STORE"},
-          {"english": "My mother is happy.", "sentence": "MY MOTHER HAPPY"},
-          {"english": "I have a new book.", "sentence": "MY BOOK NEW"},
-          {"english": "Good morning!", "sentence": "GOOD-MORNING"}
-        ]
-
-        【ALLOWED GLOSS VOCAB】
-        You may ONLY use these tokens in the gloss (\"sentence\"). Copy them exactly as written —
-        a hyphenated entry (GOOD-MORNING, SEE-YOU-LATER, NICE-MEET-YOU, HOW-YOU, WHAT-UP, DON’T-LIKE)
-        is one token and must be used whole, never split into separate words.
-        \(allowedTerms.map { $0.rawValue }.sorted().joined(separator: ", "))
-        The focus terms listed above MUST appear frequently across the \(sentenceCount) sentences, but you can also use other tokens from this list.
-
-        【CRITICAL RULES】
-        1. English MUST be a normal, grammatical sentence that makes sense. No random words.
-        2. Gloss ("sentence") MUST use only words from the ALLOWED GLOSS VOCAB list above. ASL word order: TIME + TOPIC + COMMENT + DETAILS.
-        3. Pronouns: subject forms (ME, YOU, HE, SHE, IT, WE, THEY) for subjects and objects; possessive forms (MY, YOUR, HIS, HER, ITS, OUR, THEIR) before an owned noun. Do NOT use I as a pronoun — only as the alphabet letter in a finger-spelled word/name.
-        4. No repetition: a word appears at most once per sentence (EXCEPT in Alphabet-only mode, where repeating letters is allowed).
-        5. One clear idea per sentence (request, event, description, etc.).
-        6. DIVERSITY (very important): All 5 sentences MUST be distinct from each other. No two items may share the same English sentence, and no two items may share the same gloss token sequence. Use different scenarios, different subjects, different verbs, and different sentence lengths across the 5 items — even when a focus-term is required in every sentence, vary everything else around it.
-
-        【QUALITY】
-        ✓ English: Would a native speaker say this? Clear scenario?
-        ✓ Gloss: Same meaning as the English, using only list words in ASL order?
-        ✗ Bad: "HELLO WATER BOOK FRIEND" (no meaning)
-        ✗ Bad: English that doesn’t match the gloss
-
-        【GENERATION STRATEGY】
-        Step 1: Choose a realistic scenario (greeting, shopping, daily action, feeling).
-        Step 2: Write one natural English sentence for that scenario.
-        Step 3: Convert to ASL gloss using ONLY words from the flashcard list, in correct ASL order.
-        Step 4: Verify every gloss word is in the list and the two parts match in meaning.
-
-        Generate exactly \(sentenceCount) sentences. Vary length and scenarios.
-        Output format (no markdown, raw JSON only):
-        {"sentences": [{"english": "Natural English sentence here.", "sentence": "GLOSS WORD ORDER"}, ...]}
+        Generate exactly \(sentenceCount) sentences. Vary sentence length (some short, some
+        longer), scenario, subject, and verb across the set. Balance terms the learner is
+        still learning with ones they've already mastered where possible.
         """
-    
+
         return prompt
-    }
-    
-    private static func analyzeLearningState(from flashcards: [FlashcardModel]) -> String {
-        let total = flashcards.count
-        guard total > 0 else { return "No flashcards." }
-        
-        let counts: [String: Int] = [
-            "new": flashcards.filter { $0.progress == .new }.count,
-            "learning": flashcards.filter { $0.progress == .learning }.count,
-            "polishing": flashcards.filter { $0.progress == .polishing }.count,
-            "mastered": flashcards.filter { $0.progress == .mastered }.count
-        ]
-        
-        let recentSuccesses = flashcards.filter {
-            guard let d = $0.lastSucceeded else { return false }
-            return Calendar.current.dateComponents([.day], from: d, to: Date()).day ?? Int.max <= 7
-        }.count
-        
-        let order = ["new", "learning", "polishing", "mastered"]
-        let dist = order.map { "\($0):\(counts[$0]!)" }.joined(separator: " ")
-        
-        let profile: String = {
-            let newR = Double(counts["new"]!) / Double(total)
-            let masteredR = Double(counts["mastered"]!) / Double(total)
-            let advancedR = Double(counts["polishing"]! + counts["mastered"]!) / Double(total)
-            
-            if newR >= 0.5 { return "BEGINNER" }
-            if masteredR >= 0.6 { return "ADVANCED" }
-            if advancedR >= 0.6 { return "NEAR_MASTERY" }
-            if newR + Double(counts["learning"]!) / Double(total) >= 0.6 { return "BUILDING" }
-            return "MIXED"
-        }()
-        
-        return "total:\(total) \(dist) recent_success:\(recentSuccesses) profile:\(profile)"
     }
 }
