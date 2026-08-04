@@ -254,7 +254,9 @@ struct FlexibleStartCardComponent: View {
             configureCardsForContext()
             Task {
                 await flashcardVM.loadFlashcards(modelContext: modelContext)
-                allUserFlashcards = flashcardVM.flashcards
+                // Read the deck from the store, not from `flashcardVM.flashcards`:
+                // that already holds this session's pinned queue.
+                allUserFlashcards = flashcardVM.fullDeck(modelContext: modelContext)
                 configureCardsForContext()
             }
         }
@@ -265,18 +267,17 @@ struct FlexibleStartCardComponent: View {
     
     private func configureCardsForContext() {
         let sourceCards = allUserFlashcards.isEmpty ? flashcardVM.flashcards : allUserFlashcards
-        
+
         switch context {
         case .learn(let category), .exercise(let category):
             let categoryCards = sourceCards
                 .filter { $0.category == category && $0.term.category == category }
-            flashcardVM.flashcards = categoryCards.isEmpty ? fallbackCards(for: category) : categoryCards
+            flashcardVM.setSessionQueue(categoryCards.isEmpty ? fallbackCards(for: category) : categoryCards)
         case .dailyChallenge:
             let validCards = sourceCards.filter { $0.term.category == $0.category }
-            flashcardVM.flashcards = validCards
-            flashcardVM.flashcards = flashcardVM.generateDailyReviewQueue(limit: total).cards
+            flashcardVM.setSessionQueue(validCards)
+            flashcardVM.setSessionQueue(flashcardVM.generateDailyReviewQueue(limit: total).cards)
         }
-        flashcardVM.lastCardID = nil
     }
     
     private func fallbackCards(for category: TermCategory) -> [FlashcardModel] {

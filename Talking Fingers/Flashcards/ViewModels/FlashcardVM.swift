@@ -17,6 +17,10 @@ class FlashcardVM {
     /// Set before attaching the listener so the first snapshot refreshes `flashcards`
     /// after merging remote progress (replaces the one-time launch download).
     private var refreshFlashcardsOnNextSnapshot = false
+    /// True once a session has pinned `flashcards` to its own queue. While
+    /// pinned, remote snapshots still apply progress in place — on the very
+    /// same model objects — but never re-derive the queue from the full deck.
+    private var isSessionQueuePinned = false
 
     func returnProgress(flashcards: [FlashcardModel]) -> Float {
         guard !flashcards.isEmpty else { return 0.0 }
@@ -38,10 +42,27 @@ class FlashcardVM {
     }
 
     
+    /// The learner's whole deck, independent of any session queue currently
+    /// pinned on this view model.
+    func fullDeck(modelContext: ModelContext) -> [FlashcardModel] {
+        fetchFromSwiftData(modelContext)
+    }
+
+    /// Pins the cards a Learn/Exercise/Daily session draws from. Everything
+    /// that reloads the deck respects this, so an alphabet session can't be
+    /// handed the full deck by a background refresh part-way through.
+    func setSessionQueue(_ cards: [FlashcardModel]) {
+        flashcards = cards
+        lastCardID = nil
+        isSessionQueuePinned = true
+    }
+
     func loadFlashcards(modelContext: ModelContext) async {
         isLoading = true
         seedMissingCards(modelContext)
-        flashcards = fetchFromSwiftData(modelContext)
+        if !isSessionQueuePinned {
+            flashcards = fetchFromSwiftData(modelContext)
+        }
         isLoading = false
 
         // Push local changes first so offline progress can't be rolled back
@@ -80,7 +101,9 @@ class FlashcardVM {
             self.applyRemoteProgress(remoteProgress, modelContext: modelContext)
             if self.refreshFlashcardsOnNextSnapshot {
                 self.refreshFlashcardsOnNextSnapshot = false
-                self.flashcards = self.fetchFromSwiftData(modelContext)
+                if !self.isSessionQueuePinned {
+                    self.flashcards = self.fetchFromSwiftData(modelContext)
+                }
                 self.uploadProgressMissingRemotely(remoteProgress, modelContext: modelContext)
             }
         }

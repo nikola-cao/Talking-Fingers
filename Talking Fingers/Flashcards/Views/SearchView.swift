@@ -296,8 +296,7 @@ private struct SearchTermPracticeFlow: View {
             }
         }
         .onAppear {
-            flashcardVM.flashcards = [card]
-            flashcardVM.lastCardID = nil
+            flashcardVM.setSessionQueue([card])
         }
     }
     
