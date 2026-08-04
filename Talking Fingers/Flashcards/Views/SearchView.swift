@@ -244,8 +244,8 @@ struct SearchView: View {
         switch category {
         case .alphabet:             return "Learn fingerspelling letters A–Z"
         case .numbers:              return "Learn counting and number signs"
-        case .greetings:            return "Say hello and common phrases"
         case .personalInformation:  return "Share your name, age, and more"
+        case .greetings:            return "Say hello and common phrases"
         case .family:               return "Signs for relatives and loved ones"
         case .verbs:                return "Express actions and movement"
         case .dateTime:             return "Tell time, days, and dates"

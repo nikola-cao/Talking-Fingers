@@ -10,8 +10,8 @@ import Foundation
 enum TermCategory: String, CaseIterable, Codable, Hashable {
     case alphabet = "alphabet"
     case numbers = "numbers"
-    case greetings = "greetings"
     case personalInformation = "personal information"
+    case greetings = "greetings"
     case family = "family"
     case verbs = "verbs"
     case dateTime = "date/time"
@@ -28,8 +28,8 @@ enum TermCategory: String, CaseIterable, Codable, Hashable {
         switch self {
         case .alphabet:             return "a.square"
         case .numbers:              return "number"
-        case .greetings:            return "hand.wave"
         case .personalInformation:  return "person.text.rectangle"
+        case .greetings:            return "hand.wave"
         case .family:               return "figure.2.and.child.holdinghands"
         case .verbs:                return "bolt"
         case .dateTime:             return "calendar"
