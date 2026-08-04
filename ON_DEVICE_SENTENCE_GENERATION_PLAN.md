@@ -176,15 +176,45 @@ For generation, a term counts as learned when its `ProgressType` is `.learning`,
 > two without asking** — changing `wordsLearnedCount()` alters a user-visible number and
 > would inflate existing learners' stats overnight.
 
-### 2.3 Term-level knowledge is a ranking preference, not a filter
+### 2.3 ~~Term-level knowledge is a ranking preference~~ — removed
 
-Within the eligible banks, **prefer** sentences whose terms the learner has all seen over
-ones introducing an unseen term. This is a sort key, not a gate — it never reduces the
-candidate pool to zero. Implement as a secondary sort after focus-term scoring (§4.3).
+An earlier draft ranked sentences whose terms the learner had all seen above ones
+introducing an unseen term. **This was removed in favour of equal chance across every
+eligible sentence.**
 
-### 2.4 `.personalInformation` is always unioned in
+Why: per-sentence scoring kept introducing bias that was hard to see. A relevance score
+counting focus-term matches silently became "longest gloss wins" — alphabet entries
+average ~6 tokens against verbs' ~2.6, because fingerspelling is one token per letter, so
+they took every slot in a no-category request. Category-level scoping (§2.1) already
+keeps vocabulary in range, which is what the familiarity sort was really approximating.
 
-Not a convenience — required for grammaticality. Verified against the actual term lists:
+Selection is now a uniform random draw from the eligible pool, minus recently-served
+(§4.3). If a difficulty curve is wanted later, prefer expressing it through *which
+categories are selectable* — see §2.4 — rather than reintroducing a per-sentence score.
+
+### 2.4 `.personalInformation` is always unioned into `allowedTerms` — but NOT into bank eligibility
+
+Two different questions, easy to conflate (and conflated in an earlier draft):
+
+- **`allowedTerms`** — which vocabulary may appear *inside* a sentence. Personal
+  information is **always** unioned in here.
+- **Bank eligibility** — which sentences may be *drawn*. Personal information is **not**
+  added here; only categories the request actually covers are. See §4.2.
+
+Unioning it into eligibility made PI-owned sentences ~45% of a single-category request —
+`ME STUDENT` served during a family session, containing no family vocabulary. Family-owned
+entries already carry PI vocabulary by construction (`MY MOTHER STUDENT`), so excluding
+the PI *pool* costs nothing.
+
+> **Planned (not yet implemented):** categories the learner hasn't studied will not be
+> selectable, and **personal information is a prerequisite for every other category**.
+> That makes the exclusion above straightforwardly correct — by the time `family` is
+> selectable, PI vocabulary is already known, so PI-only sentences teach nothing new.
+> It also means §2.5's day-one fallback should probably become `.personalInformation`
+> rather than `.greetings`; revisit when the gating lands.
+
+The union into `allowedTerms` is not a convenience — it is required for grammaticality.
+Verified against the actual term lists:
 
 | Category picked alone | Contents | Can form a sentence? |
 |---|---|---|
@@ -366,13 +396,12 @@ are eligible.
    unresolvable token at load time**, with an `assertionFailure` in debug — that means
    the bank and `Term.swift` have drifted.
 3. Filter to sentences whose owning category is in `eligibleCategories` (§2.1).
-4. Sort by, in order:
-   1. **focus-term score** — how many `focusTerms` the gloss contains (descending);
-   2. **familiarity** — sentences whose terms the learner has all seen (progress
-      != `.new`) rank above ones introducing an unseen term (§2.3). A preference, never
-      a filter.
-5. Return a random sample of `count` from the top of that ordering, excluding
-   recently-served sentences (§4.4).
+   **Do not union in `.personalInformation` here** — see §2.4.
+4. Drop recently-served entries (§4.4), reverting to the full candidate set if that
+   would leave fewer than `count`.
+5. **Uniform random draw** of `count` from what remains. No ranking, no weighting —
+   every eligible sentence is equally likely. See §2.3 for why per-sentence scoring was
+   removed.
 6. **If fewer than `count` remain**, return what exists rather than throwing. The
    category-level selection in §2.1 makes a genuinely empty result almost impossible;
    the one real case is a day-one learner, covered by the greetings fallback in §2.5.
@@ -419,13 +448,52 @@ run shipped `SHE LIKE HER`, an ungrammatical dangling possessive):
 
 Known limits of template generation, stated plainly:
 
-- It buys **valid tokens and correct structure, not idiomatic ASL**. Some output is
-  stiff (`THEY WANT FEEL` — "They want to feel"). That is the price of determinism.
+- It buys **valid tokens and correct structure, not idiomatic ASL**. That is the price
+  of determinism.
 - Category vocabulary bounds the ceiling. `personalInformation` has only four verbs
-  (`LIVE`, `WORK`, `LIKE`, `GO`), so its variety is inherently limited — and it is
-  unioned into *every* request, so it is the most-seen pool.
+  (`LIVE`, `WORK`, `LIKE`, `GO`), so its variety is inherently limited.
 - **Still outstanding: have a sample reviewed by someone who signs.** A shipped bank is
   permanent in a way per-request generation is not. This has not been done.
+
+#### The transitive-verb gap — a vocabulary problem, not a template problem
+
+`SentenceGenerationService.allowedCategories` excludes `commonObjects`,
+`commonDescriptors`, `dateTime`, and `feelingsEmotions`. The consequence for the verbs
+bank: **there are almost no object nouns in scope.** The only nouns a verbs-owned
+sentence can reach are `NAME`, `AGE`, `WORK`, `STUDENT`, `FAVORITE` (from personal
+information).
+
+So `MAKE`, `TAKE`, `GIVE`, `GET`, `TELL`, `SAY`, and `FEEL` cannot be given objects and
+read wrong without them ("I want to make.", "He gives."). They are excluded from the
+objectless templates via `NEEDS_OBJECT`, and only `SAY`/`KNOW`/`TELL` reappear, paired
+with the one workable object (`… my name`). **The rest of those verbs therefore get very
+little sentence practice.**
+
+The fix is not more templates — it is **adding `commonObjects` to `allowedCategories`**.
+`FOOD`, `WATER`, `BOOK`, `PHONE`, `COMPUTER`, `CAR`, `HOUSE`, `DOG`, `CAT`, `MOVIE`,
+`MUSIC` would unlock `ME EAT FOOD`, `ME WANT WATER`, `SHE MAKE FOOD`, `HE WATCH MOVIE`
+and hundreds more. That is a product decision (it adds a practice category), so it is
+flagged here rather than made.
+
+#### Template review — classes found and fixed
+
+The first generated bank shipped several bad classes. All were template-combination
+bugs, not individual bad sentences, and all are now guarded in the generator:
+
+| Class | Example | Fix |
+|---|---|---|
+| Verb × question-word cross-product | "when does he live?" | `PI_VERB_QUESTIONS` enumerates valid pairings |
+| Transitive verb, no object | "why do you like?", "I want to make." | `LIKE` takes no bare clause; `NEEDS_OBJECT` |
+| Farewell + question | "Bye, where do we live?" | openers split into greeting vs farewell |
+| Bare yes/no oddity | "Does he live?" | `PI_BARE_VERBS` excludes `LIVE` |
+| Plural possessor, singular noun | "Our name is Amy.", "our husband" | `NAME_POSSESSIVES`, `NOT_SHARED` |
+| Plural agreement | "Are we a student?" | `PLURAL_SUBJECTS` |
+| English naming an unglossed word | "where does my family live" → `MY LIVE WHERE` | template removed |
+| Yes/no question given a question word | "Do you know Amy?" → `… WHO` | ASL marks yes/no with facial grammar, no wh-token |
+
+**When adding templates, re-run the audit.** Cross-products between a verb list and a
+question-word list, or between an opener list and a clause list, are where every one of
+these came from.
 
 **Design decision worth preserving:** the idiomatic orderings `HOW YOU` ("how are you?")
 and `WHAT UP` were removed in favour of `YOU HOW`, because the app's own glossing rules
@@ -646,7 +714,7 @@ value is unproven until measured.
 | **3B model may produce poor ASL gloss** | **This is what happened.** Bank shipped instead — §9. |
 | Too few bank sentences for a given selection | Author per-category (§4.2); graceful degradation (§4.3 step 6). |
 | Day-one learner has no eligible categories | Greetings starter fallback (§2.5). |
-| Sentence contains a term the learner hasn't reached | Accepted tradeoff (§2.1); softened by the familiarity sort (§2.3) and `SignHintSheetView`. |
+| Sentence contains a term the learner hasn't reached | Accepted tradeoff (§2.1); `SignHintSheetView` covers an unknown sign. The familiarity sort that used to soften this was removed (§2.3) — the planned category gating in §2.4 is the intended mitigation instead. |
 | Bank and `Term.swift` drifting apart | Validator in CI or a pre-commit hook (§4.6). |
 | On-device latency in the practice flow | Measure; consider generating ahead of need. |
 

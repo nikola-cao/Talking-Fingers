@@ -64,17 +64,26 @@ final class SentenceBankGenerator: SentenceGenerating {
         learningState: LearningStateSummary,
         count: Int
     ) async throws -> [AISentenceModel] {
-        // Every bank entry's gloss is confined to its owning category ∪
-        // .personalInformation (enforced by the validator), so a sentence is
-        // eligible exactly when its owning category is one the request
-        // covers. `focusTerms` already IS "terms in the eligible categories"
-        // (VocabularyScope), so mapping back to categories recovers that set.
-        let eligibleCategories = Set(focusTerms.map(\.category)).union([.personalInformation])
+        // A sentence is eligible exactly when its owning category is one the
+        // request covers. `focusTerms` already IS "terms in the eligible
+        // categories" (VocabularyScope), so mapping back to categories
+        // recovers that set.
+        //
+        // `.personalInformation` is deliberately NOT unioned in here, even
+        // though `allowedTerms` unions it. Those are different questions:
+        // allowedTerms controls which vocabulary may appear INSIDE a sentence
+        // (a family sentence needs MY, ME, LIKE), while this controls which
+        // sentences are eligible at all. Unioning it here made PI-owned
+        // sentences ~45% of a single-category request — "ME STUDENT" in a
+        // family session, containing no family vocabulary. Family-owned
+        // entries already carry PI vocabulary by construction, so nothing is
+        // lost. PI-owned sentences surface when personal information is itself
+        // an eligible category.
+        let eligibleCategories = Set(focusTerms.map(\.category))
 
         let candidates = entries.filter { eligibleCategories.contains($0.category) }
         guard !candidates.isEmpty else { return [] }
 
-        let focusSet = Set(focusTerms)
         let recentlyServed = loadRecentlyServedIDs()
 
         // Reset the exclusion set when it would leave too few candidates,
@@ -82,25 +91,12 @@ final class SentenceBankGenerator: SentenceGenerating {
         let freshCandidates = candidates.filter { !recentlyServed.contains($0.id) }
         let pool = freshCandidates.count >= count ? freshCandidates : candidates
 
-        // Relevance is whether a sentence uses ANY focus term, not how many.
-        // Counting matches sounds better but degenerates: when no category is
-        // chosen, `focusTerms` spans every eligible category, so the count
-        // becomes the gloss length and the longest sentences win. Alphabet
-        // entries are the longest in the bank (fingerspelling is one token per
-        // letter), so counting handed every slot to "HER NAME C A R L O S".
-        let ranked = pool.sorted { a, b in
-            let relevantA = a.gloss.contains { focusSet.contains($0) }
-            let relevantB = b.gloss.contains { focusSet.contains($0) }
-            if relevantA != relevantB { return relevantA }
-
-            let familiarA = a.gloss.allSatisfy { learningState.familiarTerms.contains($0) }
-            let familiarB = b.gloss.allSatisfy { learningState.familiarTerms.contains($0) }
-            if familiarA != familiarB { return familiarA }
-
-            return false
-        }
-
-        let selected = interleavedByCategory(ranked, count: count)
+        // Every eligible sentence is equally likely. No relevance or
+        // familiarity weighting: category-level scoping already keeps the
+        // vocabulary in range, and any per-sentence score risks the bias that
+        // made a match-count ranking degenerate into "longest gloss wins"
+        // (alphabet entries, at ~6 tokens to verbs' ~2.6, took every slot).
+        let selected = Array(pool.shuffled().prefix(count))
 
         recordServed(ids: selected.map(\.id), requestedCount: count)
 
@@ -113,32 +109,6 @@ final class SentenceBankGenerator: SentenceGenerating {
                 completed: false
             )
         }
-    }
-
-    /// Draws round-robin across categories so a request covering several of
-    /// them returns a spread rather than however many the ranking happened to
-    /// stack at the front. Rank order is preserved within each category; the
-    /// shuffles are what keep repeated requests from returning the same set.
-    private func interleavedByCategory(_ ranked: [BankEntry], count: Int) -> [BankEntry] {
-        guard count > 0 else { return [] }
-
-        // Sort the grouping key so bucket construction is deterministic, then
-        // shuffle the bucket order so no category permanently goes first.
-        var buckets = Dictionary(grouping: ranked, by: \.category)
-            .sorted { $0.key.rawValue < $1.key.rawValue }
-            .map { Array($0.value.prefix(max(count * 3, count))).shuffled() }
-        buckets.shuffle()
-
-        var selected: [BankEntry] = []
-        var bucketIndex = 0
-        while selected.count < count, buckets.contains(where: { !$0.isEmpty }) {
-            let index = bucketIndex % buckets.count
-            if !buckets[index].isEmpty {
-                selected.append(buckets[index].removeFirst())
-            }
-            bucketIndex += 1
-        }
-        return selected
     }
 
     private func loadRecentlyServedIDs() -> Set<String> {
