@@ -11,6 +11,7 @@ import SwiftData
 struct GenerateSentencesView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(SwiftDataVM.self) private var dataVM
+    @Query private var flashcards: [FlashcardModel]
     @State private var selectedCategories: Set<TermCategory> = []
     @State private var modeSelection: PracticeModeSelection
     @State private var trainingName: String = ""
@@ -31,15 +32,23 @@ struct GenerateSentencesView: View {
     }
 
     private var canGenerate: Bool {
-        !trainingName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isGenerating
+        !trainingName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !isGenerating
+            && !unlockedCategories.isEmpty
     }
 
     private var availableCategories: [TermCategory] {
         SentenceGenerationService.allowedCategories
     }
 
+    /// Categories the learner has earned through Learn. Everything else in the
+    /// picker is shown locked and can't be selected.
+    private var unlockedCategories: [TermCategory] {
+        PracticeCategoryUnlock.unlockedCategories(from: availableCategories, flashcards: flashcards)
+    }
+
     private var effectiveCategories: Set<TermCategory> {
-        selectedCategories.isEmpty ? Set(availableCategories) : selectedCategories
+        selectedCategories.isEmpty ? Set(unlockedCategories) : selectedCategories
     }
 
     private var isComprehensionOnlyMode: Bool {
@@ -71,11 +80,19 @@ struct GenerateSentencesView: View {
                         CategoryButton(
                             category: category,
                             isSelected: selectedCategories.contains(category),
+                            isLocked: !unlockedCategories.contains(category),
                             action: {
                                 toggleCategory(category)
                             }
                         )
                     }
+                }
+
+                if let lockHint {
+                    Text(lockHint)
+                        .font(.jakartaCaption)
+                        .foregroundColor(TFColors.textMuted)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             
@@ -138,7 +155,23 @@ struct GenerateSentencesView: View {
         }
     }
     
+    /// Shown under the picker while anything is still locked, so the empty or
+    /// half-empty row reads as "not yet earned" rather than as a bug.
+    private var lockHint: String? {
+        if unlockedCategories.isEmpty {
+            let names = PracticeCategoryUnlock.foundationCategories
+                .map(\.displayName)
+                .joined(separator: ", ")
+            return "Complete Learn for \(names) to unlock practice."
+        }
+        if unlockedCategories.count < availableCategories.count {
+            return "Locked categories unlock once you complete Learn for them."
+        }
+        return nil
+    }
+
     private func toggleCategory(_ category: TermCategory) {
+        guard unlockedCategories.contains(category) else { return }
         withAnimation(.easeInOut(duration: 0.2)) {
             if selectedCategories.contains(category) {
                 selectedCategories.remove(category)
@@ -155,13 +188,13 @@ struct GenerateSentencesView: View {
 
             do {
                 let flashcards = dataVM.fetchFlashcards()
-                // Pass the learner's raw selection (which may be empty) rather
-                // than `effectiveCategories` — an empty set has a specific
-                // meaning to VocabularyScope (fall back to studied categories,
-                // or greetings for a day-one learner) that's lost once it's
-                // pre-resolved to "all categories" here.
+                // Always hand VocabularyScope an explicit category set. Its
+                // empty-set fallback (studied categories, or greetings on day
+                // one) predates category locking and would let a session draw
+                // on a category the picker refuses to offer — e.g. a partly
+                // learned foundation, which stays locked until all three are.
                 let sentences = try await SentenceGenerationService.generateSentences(
-                    categories: selectedCategories,
+                    categories: effectiveCategories,
                     flashcards: flashcards,
                     modeSelection: modeSelection
                 )
@@ -184,25 +217,49 @@ struct GenerateSentencesView: View {
 struct CategoryButton: View {
     let category: TermCategory
     let isSelected: Bool
+    var isLocked: Bool = false
     let action: () -> Void
-    
+
+    private var foreground: Color {
+        if isLocked { return TFColors.lightGray }
+        return isSelected ? TFColors.amber : TFColors.darkerGray
+    }
+
+    private var background: Color {
+        if isLocked { return TFColors.badgeLockedBg }
+        return isSelected ? TFColors.paleGold : .white
+    }
+
+    private var border: Color {
+        if isLocked { return TFColors.borderGray }
+        return isSelected ? TFColors.amber : TFColors.borderLight
+    }
+
     var body: some View {
         Button(action: action) {
-            Text(category.rawValue.capitalized)
-                .font(.jakarta(size: 17, weight: .medium))
-                .foregroundColor(isSelected ? TFColors.amber : TFColors.darkerGray)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(isSelected ? TFColors.paleGold : .white)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .strokeBorder(isSelected ? TFColors.amber : TFColors.borderLight, lineWidth: isSelected ? 0.5 : 1.5)
-                )
+            HStack(spacing: 6) {
+                if isLocked {
+                    Image(systemName: "lock.fill")
+                        .font(.jakarta(size: 13, weight: .medium))
+                }
+                Text(category.rawValue.capitalized)
+                    .font(.jakarta(size: 17, weight: .medium))
+            }
+            .foregroundColor(foreground)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(background)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .strokeBorder(border, lineWidth: isSelected && !isLocked ? 0.5 : 1.5)
+            )
         }
         .buttonStyle(.plain)
+        .disabled(isLocked)
+        .accessibilityLabel(isLocked ? "\(category.displayName), locked" : category.displayName)
     }
 }
 
