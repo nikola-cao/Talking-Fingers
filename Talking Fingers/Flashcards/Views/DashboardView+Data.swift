@@ -50,17 +50,14 @@ extension DashboardView {
         flashcardVM.flashcards.filter { $0.term.category == $0.category }
     }
 
-    var foundationsCompleted: Bool {
-        isLearnCompleted(for: .alphabet) && isLearnCompleted(for: .numbers)
-    }
-
     func isLearnCompleted(for category: TermCategory) -> Bool {
-        categoryScopedCards.contains { $0.category == category && $0.progress != .new }
+        CategoryUnlock.isLearnCompleted(category, flashcards: categoryScopedCards)
     }
 
+    /// Categories open in a chain: alphabet and numbers from the start, then
+    /// each one as everything listed before it is learned.
     func canAccessCategory(_ category: TermCategory) -> Bool {
-        if category == .alphabet || category == .numbers { return true }
-        return foundationsCompleted
+        CategoryUnlock.canAccess(category, flashcards: categoryScopedCards)
     }
 
     func isExerciseUnlocked(for category: TermCategory) -> Bool {

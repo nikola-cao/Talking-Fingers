@@ -44,7 +44,7 @@ struct GenerateSentencesView: View {
     /// Categories the learner has earned through Learn. Everything else in the
     /// picker is shown locked and can't be selected.
     private var unlockedCategories: [TermCategory] {
-        PracticeCategoryUnlock.unlockedCategories(from: availableCategories, flashcards: flashcards)
+        CategoryUnlock.unlockedForPractice(from: availableCategories, flashcards: flashcards)
     }
 
     private var effectiveCategories: Set<TermCategory> {
@@ -159,7 +159,7 @@ struct GenerateSentencesView: View {
     /// half-empty row reads as "not yet earned" rather than as a bug.
     private var lockHint: String? {
         if unlockedCategories.isEmpty {
-            let names = PracticeCategoryUnlock.foundationCategories
+            let names = CategoryUnlock.foundationCategories
                 .map(\.displayName)
                 .joined(separator: ", ")
             return "Complete Learn for \(names) to unlock practice."
