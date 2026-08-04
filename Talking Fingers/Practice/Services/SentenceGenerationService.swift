@@ -12,7 +12,7 @@
 //  valid but semantically wrong gloss ("GOOD MORNING ME", "NAME ME J") that
 //  no cheap validator catches, whereas bank entries are correct by
 //  construction and work on every device. See
-//  ON_DEVICE_SENTENCE_GENERATION_PLAN.md §10 for the evaluation and what
+//  ON_DEVICE_SENTENCE_GENERATION_PLAN.md §9 for the evaluation and what
 //  would have to change to revisit it.
 //
 
