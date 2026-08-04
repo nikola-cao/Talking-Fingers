@@ -97,6 +97,10 @@ enum SentenceGenerationService {
         let focusTerms = Term.allCases.filter { scope.eligibleCategories.contains($0.category) }
         let learningState = LearningStateSummary(flashcards: flashcards, allowedTerms: scope.allowedTerms)
 
+        log("scope: \(scope.eligibleCategories.map(\.rawValue).sorted().joined(separator: ", ")) "
+            + "(\(scope.allowedTerms.count) allowed terms)"
+            + (categories.isEmpty ? " — no categories chosen, derived from progress" : ""))
+
         let sentences = try await generateWithFallback(
             allowedTerms: scope.allowedTerms,
             focusTerms: focusTerms,
