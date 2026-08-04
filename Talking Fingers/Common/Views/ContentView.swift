@@ -5,30 +5,48 @@
 //  Created by Nikola Cao on 1/24/26.
 //
 import SwiftUI
+import SwiftData
 struct ContentView: View {
     @Environment(AuthenticationViewModel.self) var authVM
     @Environment(SwiftDataVM.self) private var dataVM
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+
+    /// The account the local store has been prepared for. The main UI stays
+    /// gated behind this so no view can read the previous account's leftover
+    /// rows in the window between sign-in and the store being scoped.
+    @State private var preparedAccountId: String?
 
     var body: some View {
         Group {
             if authVM.isInitializingSession {
                 Color.white
                     .ignoresSafeArea()
-            } else if authVM.currentUser != nil {
-                MainNavigationView()
+            } else if let user = authVM.currentUser {
+                if preparedAccountId == user.userId {
+                    MainNavigationView()
+                } else {
+                    Color.white
+                        .ignoresSafeArea()
+                }
             } else {
                 EntryView()
             }
         }
-        .onAppear {
-            if let user = authVM.currentUser {
-                Task { await dataVM.syncAuthenticatedUser(user) }
+        .task(id: authVM.currentUser?.userId) {
+            guard let user = authVM.currentUser else {
+                preparedAccountId = nil
+                return
             }
-        }
-        .onChange(of: authVM.currentUser?.userId) { _, userId in
-            guard userId != nil, let user = authVM.currentUser else { return }
-            Task { await dataVM.syncAuthenticatedUser(user) }
+
+            // The App sets this too, but ordering between its `onAppear` and
+            // this task isn't guaranteed and the wipe below needs a context.
+            dataVM.modelContext = modelContext
+            dataVM.prepareLocalStore(for: user.userId)
+            preparedAccountId = user.userId
+
+            await dataVM.syncAuthenticatedUser(user)
+            await dataVM.syncSavedPractices()
         }
         .onChange(of: scenePhase) { oldPhase, newPhase in
             if newPhase == .active,

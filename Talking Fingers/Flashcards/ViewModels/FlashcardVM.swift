@@ -81,8 +81,28 @@ class FlashcardVM {
             if self.refreshFlashcardsOnNextSnapshot {
                 self.refreshFlashcardsOnNextSnapshot = false
                 self.flashcards = self.fetchFromSwiftData(modelContext)
+                self.uploadProgressMissingRemotely(remoteProgress, modelContext: modelContext)
             }
         }
+    }
+
+    /// Pushes cards that have local progress but no document under this
+    /// account. Uploads otherwise only happen when a card changes, so progress
+    /// that predates the account — or a Firestore collection cleared
+    /// server-side — would never make it up on its own.
+    private func uploadProgressMissingRemotely(
+        _ remoteProgress: [FlashcardsServices.CardProgress],
+        modelContext: ModelContext
+    ) {
+        let remoteTerms = Set(remoteProgress.map(\.term))
+        let unbackedCards = fetchFromSwiftData(modelContext).filter {
+            $0.progress != .new && !remoteTerms.contains($0.term)
+        }
+        guard !unbackedCards.isEmpty else { return }
+
+        for card in unbackedCards { card.needsSync = true }
+        try? modelContext.save()
+        Task { await pushPendingChanges(modelContext) }
     }
 
     private func fetchFromSwiftData(_ modelContext: ModelContext) -> [FlashcardModel] {

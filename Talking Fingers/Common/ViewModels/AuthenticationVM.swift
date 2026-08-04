@@ -91,15 +91,25 @@ class AuthenticationViewModel {
             }
 
             let newUser = User(userId: authUser.uid, name: name, email: email, handedness: normalizedHandedness)
+            newUser.profileUpdatedAt = Date()
+            newUser.needsProfileSync = true
 
             do {
+                // Force the ID token before the first write. Firestore picks up
+                // a brand-new session's credentials asynchronously, and a write
+                // issued before that lands is rejected as unauthenticated
+                // ("Missing or insufficient permissions") even under correct rules.
+                _ = try? await authUser.getIDTokenResult(forcingRefresh: true)
+
                 // Writes the same fields the manual payload used to
                 // (userId/name/email/streakCount 0/profileUpdatedAt now,
                 // + handedness when set).
                 try await UserProfileService().uploadProfile(for: newUser)
+                newUser.needsProfileSync = false
             } catch {
-                // Profile doc is re-uploaded by the next profile sync; don't block sign-in on it.
-                print("Error saving user profile: \(error)")
+                // Stays flagged so SwiftDataVM.syncAuthenticatedUser retries it
+                // moments later; don't block sign-in on it.
+                print("Error saving user profile, will retry on next sync: \(error)")
             }
 
             await MainActor.run {

@@ -14,7 +14,8 @@ class SwiftDataVM {
     var modelContext: ModelContext?
     var savedPractices: [SavedPracticeModel] = []
     private let profileService = UserProfileService()
-    
+    private let practiceService = SavedPracticeService()
+
     init(modelContext: ModelContext? = nil) {
         self.modelContext = modelContext
     }
@@ -34,7 +35,7 @@ class SwiftDataVM {
     // MARK: - Saved Practice Sessions
     func savePracticeSession(sentences: [AISentenceModel], categories: [String], title: String = "") {
         guard let modelContext = modelContext else { return }
-        
+
         let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let savedPractice = SavedPracticeModel(
             sentences: sentences,
@@ -42,8 +43,29 @@ class SwiftDataVM {
             title: trimmedTitle.isEmpty ? nil : trimmedTitle
         )
         modelContext.insert(savedPractice)
-        
+
+        practiceDidChange(savedPractice)
+    }
+
+    /// Persists a locally changed practice and uploads it. If the upload fails
+    /// (e.g. offline) the practice stays flagged and is retried by the next
+    /// `syncSavedPractices()`.
+    func practiceDidChange(_ practice: SavedPracticeModel) {
+        practice.updatedAt = Date()
+        practice.needsSync = true
         persistModelContext()
+
+        Task {
+            do {
+                try await practiceService.upload([practice])
+                await MainActor.run {
+                    practice.needsSync = false
+                    persistModelContext()
+                }
+            } catch {
+                print("Failed to upload practice, will retry next sync: \(error)")
+            }
+        }
     }
 
     /// Persists pending changes (e.g. after mutating an existing `SavedPracticeModel`).
@@ -121,6 +143,14 @@ class SwiftDataVM {
             localUser.profileUpdatedAt = authUser.profileUpdatedAt
         }
 
+        // Registration couldn't write the profile document (rules, App Check,
+        // a cold ID token). Carry the flag over so the retry below actually
+        // fires instead of the account never getting a profile doc at all.
+        if authUser.needsProfileSync {
+            localUser.profileUpdatedAt = authUser.profileUpdatedAt ?? Date()
+            localUser.needsProfileSync = true
+        }
+
         await pushPendingProfileChanges(for: localUser)
 
         do {
@@ -139,6 +169,128 @@ class SwiftDataVM {
 
     func localUser(matching userId: String) -> User? {
         fetchLocalUser(userId: userId)
+    }
+
+    // MARK: - Account Scoping
+
+    /// Wipes the local store when a *different* account signs in.
+    ///
+    /// Everything in SwiftData is device-scoped — only `User` carries a uid,
+    /// and nothing queries by it — so without this the previous account's card
+    /// progress, practices and stats silently become the new account's.
+    /// Signing back into the same account keeps its data, so a plain sign-out
+    /// costs the user nothing.
+    ///
+    /// Runs synchronously: it must complete before any view reads the store.
+    func prepareLocalStore(for userId: String) {
+        defer { LocalAccountStore.lastSignedInUserId = userId }
+
+        if let recordedUserId = LocalAccountStore.lastSignedInUserId {
+            guard recordedUserId != userId else { return }
+        } else {
+            // Upgrade path: devices that signed in before this key existed.
+            // Fall back to the `User` rows already in the store — one from
+            // another account means the local data isn't this account's.
+            guard localUserIds().contains(where: { $0 != userId }) else { return }
+        }
+
+        wipeLocalUserData()
+    }
+
+    /// Deletes every user-scoped row. The flashcard deck is re-seeded from
+    /// `Term.allCases` on the next load and re-hydrated from the new account's
+    /// Firestore progress, so dropping the rows loses nothing recoverable.
+    private func wipeLocalUserData() {
+        guard let modelContext else { return }
+        do {
+            try modelContext.delete(model: FlashcardModel.self)
+            try modelContext.delete(model: SavedPracticeModel.self)
+            try modelContext.delete(model: PracticeAttemptModel.self)
+            try modelContext.delete(model: AnalyticsModel.self)
+            try modelContext.delete(model: User.self)
+            try modelContext.save()
+            savedPractices = []
+        } catch {
+            print("Failed to reset local store on account switch: \(error)")
+        }
+    }
+
+    private func localUserIds() -> [String] {
+        guard let modelContext else { return [] }
+        let users = (try? modelContext.fetch(FetchDescriptor<User>())) ?? []
+        return users.map(\.userId)
+    }
+
+    // MARK: - Saved Practice Sync
+
+    /// Pushes practices changed locally, then merges what the account has
+    /// stored remotely. Called on sign-in, after `prepareLocalStore`.
+    func syncSavedPractices() async {
+        await pushPendingPractices()
+        await pullRemotePractices()
+    }
+
+    private func pushPendingPractices() async {
+        guard let modelContext else { return }
+        let descriptor = FetchDescriptor<SavedPracticeModel>(
+            predicate: #Predicate<SavedPracticeModel> { $0.needsSync }
+        )
+        guard let dirtyPractices = try? modelContext.fetch(descriptor), !dirtyPractices.isEmpty else { return }
+
+        do {
+            try await practiceService.upload(dirtyPractices)
+            await MainActor.run {
+                for practice in dirtyPractices { practice.needsSync = false }
+                persistModelContext()
+            }
+        } catch {
+            print("Failed to push \(dirtyPractices.count) pending practice(s), will retry next sync: \(error)")
+        }
+    }
+
+    private func pullRemotePractices() async {
+        do {
+            let remotePractices = try await practiceService.downloadPractices()
+            guard !remotePractices.isEmpty else { return }
+            await MainActor.run { applyRemotePractices(remotePractices) }
+        } catch {
+            print("Failed to download practices: \(error)")
+        }
+    }
+
+    /// Newest action wins, matching card progress: a remote practice is only
+    /// applied when it's strictly newer than the local copy.
+    private func applyRemotePractices(_ remotePractices: [SavedPracticeService.RemotePractice]) {
+        guard let modelContext else { return }
+
+        let existing = (try? modelContext.fetch(FetchDescriptor<SavedPracticeModel>())) ?? []
+        let localByID = Dictionary(existing.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+
+        for remote in remotePractices {
+            guard let local = localByID[remote.id] else {
+                modelContext.insert(
+                    SavedPracticeModel(
+                        id: remote.id,
+                        date: remote.date,
+                        sentencesData: remote.sentencesData,
+                        categories: remote.categories,
+                        title: remote.title,
+                        updatedAt: remote.updatedAt
+                    )
+                )
+                continue
+            }
+
+            guard remote.updatedAt > (local.updatedAt ?? .distantPast) else { continue }
+            local.date = remote.date
+            local.sentencesData = remote.sentencesData
+            local.categories = remote.categories
+            local.title = remote.title
+            local.updatedAt = remote.updatedAt
+            local.needsSync = false
+        }
+
+        persistModelContext()
     }
 
     // MARK: - Practice Tracking

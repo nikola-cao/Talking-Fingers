@@ -11,6 +11,11 @@ service cloud.firestore {
       match /cardProgress/{term} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // Saved practices, one doc per practice UUID.
+      match /practices/{practiceId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     // Sentence generation is now on-device (Foundation Models) or a bundled

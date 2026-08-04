@@ -361,7 +361,7 @@ struct SavedPracticeView: View {
             existingSession.date = Date()
             let trimmed = lastPracticeTitle.trimmingCharacters(in: .whitespacesAndNewlines)
             existingSession.title = trimmed.isEmpty ? nil : trimmed
-            dataVM.persistModelContext()
+            dataVM.practiceDidChange(existingSession)
         } else {
             dataVM.savePracticeSession(
                 sentences: sessionSentences,
