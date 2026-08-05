@@ -28,7 +28,6 @@ struct DashboardView: View {
     @State private var showOnboarding: Bool = false
 
     // for learn/exercise popup
-    @State private var showModePopup: Bool = false
     @State private var selectedCategoryForPopup: TermCategory? = nil
 
     @State private var activeFlow: ActiveFlow? = nil
@@ -53,8 +52,8 @@ struct DashboardView: View {
                 .frame(maxWidth: .infinity)
             }
             .background(Color.categoryComponentColor)
-            .popupHost(isPresented: $showModePopup) {
-                modePopup
+            .popupHost(item: $selectedCategoryForPopup) { category in
+                modePopup(for: category)
             }
             .overlay {
                 if let flow = activeFlow {
@@ -194,8 +193,8 @@ struct DashboardView: View {
                     .ignoresSafeArea(edges: .top)
                 }
             }
-            .popupHost(isPresented: $showModePopup) {
-                modePopup
+            .popupHost(item: $selectedCategoryForPopup) { category in
+                modePopup(for: category)
             }
             .fullScreenCover(item: $activeFlow) { flow in
                 flowDestination(for: flow)
@@ -217,23 +216,24 @@ struct DashboardView: View {
 
     /// Learn/Exercise chooser shown when a category is tapped; identical on
     /// both platforms.
-    private var modePopup: some View {
+    /// Built from the category the host hands back, never from captured state —
+    /// see `PopupHostModifier`.
+    private func modePopup(for category: TermCategory) -> some View {
         ModePopupView(
-            isPresented: $showModePopup,
-            isExerciseUnlocked: selectedCategoryForPopup.map { canAccessCategory($0) && isExerciseUnlocked(for: $0) } ?? false,
-            learnPercentage: selectedCategoryForPopup.map { learnedPercentage(for: $0) } ?? 0,
-            exercisePercentage: selectedCategoryForPopup.map { exerciseMasteryPercentage(for: $0) } ?? 0,
+            isPresented: Binding(
+                get: { selectedCategoryForPopup != nil },
+                set: { if !$0 { selectedCategoryForPopup = nil } }
+            ),
+            isExerciseUnlocked: canAccessCategory(category) && isExerciseUnlocked(for: category),
+            learnPercentage: learnedPercentage(for: category),
+            exercisePercentage: exerciseMasteryPercentage(for: category),
             onLearn: {
-                if let cat = selectedCategoryForPopup {
-                    guard canAccessCategory(cat) else { return }
-                    activeFlow = .learn(cat)
-                }
+                guard canAccessCategory(category) else { return }
+                activeFlow = .learn(category)
             },
             onExercise: {
-                if let cat = selectedCategoryForPopup {
-                    guard canAccessCategory(cat) else { return }
-                    activeFlow = .exercise(cat)
-                }
+                guard canAccessCategory(category) else { return }
+                activeFlow = .exercise(category)
             }
         )
     }
@@ -333,7 +333,6 @@ struct DashboardView: View {
         Button {
             guard canAccessCategory(category) else { return }
             selectedCategoryForPopup = category
-            showModePopup = true
         } label: {
             CategoryComponent(title: title)
                 .frame(maxWidth: .infinity)
