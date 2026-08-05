@@ -38,20 +38,6 @@ enum CategoryUnlock {
         return !categoryCards.isEmpty && categoryCards.allSatisfy { $0.progress != .new }
     }
 
-    /// Share of the category's terms that have moved off `.new`, 0...100.
-    /// Reports 100 only when the category is genuinely complete — never
-    /// rounds up to it — since 100% is what opens the next category.
-    static func learnedPercentage(_ category: TermCategory, flashcards: [FlashcardModel]) -> Int {
-        let categoryCards = flashcards.filter { card in
-            card.category == category && card.term.category == category
-        }
-        guard !categoryCards.isEmpty else { return 0 }
-
-        let learnedCount = categoryCards.filter { $0.progress != .new }.count
-        guard learnedCount < categoryCards.count else { return 100 }
-        return min(99, Int(Double(learnedCount) / Double(categoryCards.count) * 100))
-    }
-
     // MARK: - Home
 
     /// Whether home lets the learner open this category at all.

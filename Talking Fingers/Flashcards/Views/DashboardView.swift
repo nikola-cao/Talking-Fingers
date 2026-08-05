@@ -221,6 +221,8 @@ struct DashboardView: View {
         ModePopupView(
             isPresented: $showModePopup,
             isExerciseUnlocked: selectedCategoryForPopup.map { canAccessCategory($0) && isExerciseUnlocked(for: $0) } ?? false,
+            learnPercentage: selectedCategoryForPopup.map { learnedPercentage(for: $0) } ?? 0,
+            exercisePercentage: selectedCategoryForPopup.map { exerciseMasteryPercentage(for: $0) } ?? 0,
             onLearn: {
                 if let cat = selectedCategoryForPopup {
                     guard canAccessCategory(cat) else { return }
@@ -333,7 +335,7 @@ struct DashboardView: View {
             selectedCategoryForPopup = category
             showModePopup = true
         } label: {
-            CategoryComponent(title: title, percentLearned: learnedPercentage(for: category))
+            CategoryComponent(title: title)
                 .frame(maxWidth: .infinity)
                 .opacity(canAccessCategory(category) ? 1.0 : 0.5)
         }

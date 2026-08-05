@@ -9,9 +9,6 @@ import SwiftUI
 
 struct CategoryComponent: View {
     let title: String
-    /// Share of the category's terms already learned, shown on the trailing
-    /// edge. `nil` hides it (previews, and anywhere without card data).
-    var percentLearned: Int? = nil
 
     var body: some View {
         HStack(spacing: 16) {
@@ -37,15 +34,7 @@ struct CategoryComponent: View {
                     .foregroundStyle(.gray)
             }
             
-            Spacer(minLength: 8)
-
-            if let percentLearned {
-                Text("\(percentLearned)%")
-                    .font(.jakarta(size: 16, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(percentLearned == 100 ? TFColors.deepGreen : .black.opacity(0.5))
-                    .accessibilityLabel("\(percentLearned) percent learned")
-            }
+            Spacer()
         }
         .padding(16)
         .frame(maxWidth: .infinity)

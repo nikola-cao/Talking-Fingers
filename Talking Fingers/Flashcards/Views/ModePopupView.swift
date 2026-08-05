@@ -13,9 +13,15 @@ struct ModePopupView: View {
     @State private var animatePopup = false
     
     var isExerciseUnlocked: Bool = true
+    /// Share of the category's terms already seen in Learn, 0...100. Always
+    /// shown — the popup only ever opens for a category, so a missing number
+    /// would be a bug hiding itself.
+    var learnPercentage: Int = 0
+    /// Mastery across the category, which only Exercise can raise, 0...100.
+    var exercisePercentage: Int = 0
     var onLearn: () -> Void
     var onExercise: () -> Void
-    
+
     var body: some View {
         ZStack {
             Color.black.opacity(animatePopup ? 0.3 : 0)
@@ -64,7 +70,8 @@ struct ModePopupView: View {
             imageName: "SentencesComprehendFlowerFull",
             background: Color(red: 0.678, green: 0.808, blue: 0.561, opacity: 0.3),
             border: Color(red: 0.678, green: 0.95, blue: 0.561),
-            showLockHint: false
+            showLockHint: false,
+            percentage: learnPercentage
         ) {
             onLearn()
             closePopup()
@@ -77,7 +84,8 @@ struct ModePopupView: View {
             imageName: "SentencesSignFlowerFull",
             background: Color(red: 0.663, green: 0.808, blue: 0.985, opacity: isExerciseUnlocked ? 0.4 : 0.2),
             border: Color(red: 0.663, green: 0.85, blue: 0.925).opacity(isExerciseUnlocked ? 1.0 : 0.5),
-            showLockHint: !isExerciseUnlocked
+            showLockHint: !isExerciseUnlocked,
+            percentage: isExerciseUnlocked ? exercisePercentage : nil
         ) {
             onExercise()
             closePopup()
@@ -93,6 +101,7 @@ struct ModePopupView: View {
         background: Color,
         border: Color,
         showLockHint: Bool,
+        percentage: Int? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -102,20 +111,25 @@ struct ModePopupView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(height: 80)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.jakartaTitle)
                         .foregroundStyle(.black)
-                    
+
                     if showLockHint {
                         Text("Complete Learn first")
                             .font(.jakartaCaption)
                             .foregroundStyle(.secondary)
                     }
                 }
-                
+
                 Spacer()
+
+                if let percentage {
+                    percentageLabel(percentage)
+                        .padding(.trailing, 20)
+                }
             }
             .frame(maxWidth: .infinity, minHeight: 110)
             .background(background)
@@ -143,6 +157,12 @@ struct ModePopupView: View {
             }
             .frame(maxWidth: .infinity, minHeight: 220)
             .background(background)
+            .overlay(alignment: .topTrailing) {
+                if let percentage {
+                    percentageLabel(percentage)
+                        .padding([.top, .trailing], 12)
+                }
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
                     .stroke(border, lineWidth: 1.5)
@@ -153,6 +173,14 @@ struct ModePopupView: View {
         .buttonStyle(.plain)
     }
     
+    private func percentageLabel(_ percentage: Int) -> some View {
+        Text("\(percentage)%")
+            .font(.jakarta(size: 16, weight: .semibold))
+            .monospacedDigit()
+            .foregroundStyle(percentage == 100 ? TFColors.deepGreen : .black.opacity(0.55))
+            .accessibilityLabel("\(percentage) percent complete")
+    }
+
     private func closePopup() {
         animatePopup = false
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {

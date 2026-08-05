@@ -13,14 +13,24 @@ extension DashboardView {
     // Compute categories that are in progress (have at least one non-new and non-mastered card)
     var inProgressCategories: [(category: TermCategory, progress: Float, mode: String)] {
         let grouped = Dictionary(grouping: categoryScopedCards) { $0.category }
-        return grouped.compactMap { (category, cards) in
-            let progress = flashcardVM.returnProgress(flashcards: cards)
-            // Only show categories that are actually in progress (not 0% and not 100%)
-            guard progress > 0 && progress < 100 else { return nil }
+        return grouped.compactMap { (category, _) in
+            let learnedPercent = learnedPercentage(for: category)
+            let exercisePercent = exerciseMasteryPercentage(for: category)
+            let learnDone = isLearnCompleted(for: category)
 
-            // Decide mode based on average progress
-            let mode = progress < 50 ? "Learn" : "Exercise"
-            return (category: category, progress: progress, mode: mode)
+            // Untouched, or finished outright — neither is something to
+            // jump back into.
+            guard learnedPercent > 0, !(learnDone && exercisePercent >= 100) else { return nil }
+
+            // Each card reports the mode it's offering to continue: Learn
+            // coverage until Learn is done, mastery afterwards. Deciding the
+            // mode on Learn completion also stops this button opening an
+            // Exercise the category hasn't unlocked yet.
+            return (
+                category: category,
+                progress: Float(learnDone ? exercisePercent : learnedPercent),
+                mode: learnDone ? "Exercise" : "Learn"
+            )
         }
         .sorted { $0.progress > $1.progress }
         .prefix(2)
@@ -50,10 +60,14 @@ extension DashboardView {
         flashcardVM.flashcards.filter { $0.term.category == $0.category }
     }
 
-    /// Share of the category's terms already learned, for the badge on each
-    /// category row.
+    /// Share of the category's terms already seen in Learn.
     func learnedPercentage(for category: TermCategory) -> Int {
-        CategoryUnlock.learnedPercentage(category, flashcards: categoryScopedCards)
+        CategoryProgress.learned(category, flashcards: categoryScopedCards)
+    }
+
+    /// Mastery across the category, which only Exercise can raise.
+    func exerciseMasteryPercentage(for category: TermCategory) -> Int {
+        CategoryProgress.exerciseMastery(category, flashcards: categoryScopedCards)
     }
 
     func isLearnCompleted(for category: TermCategory) -> Bool {
