@@ -50,6 +50,12 @@ extension DashboardView {
         flashcardVM.flashcards.filter { $0.term.category == $0.category }
     }
 
+    /// Share of the category's terms already learned, for the badge on each
+    /// category row.
+    func learnedPercentage(for category: TermCategory) -> Int {
+        CategoryUnlock.learnedPercentage(category, flashcards: categoryScopedCards)
+    }
+
     func isLearnCompleted(for category: TermCategory) -> Bool {
         CategoryUnlock.isLearnCompleted(category, flashcards: categoryScopedCards)
     }

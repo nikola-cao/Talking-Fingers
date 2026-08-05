@@ -333,7 +333,7 @@ struct DashboardView: View {
             selectedCategoryForPopup = category
             showModePopup = true
         } label: {
-            CategoryComponent(title: title)
+            CategoryComponent(title: title, percentLearned: learnedPercentage(for: category))
                 .frame(maxWidth: .infinity)
                 .opacity(canAccessCategory(category) ? 1.0 : 0.5)
         }
