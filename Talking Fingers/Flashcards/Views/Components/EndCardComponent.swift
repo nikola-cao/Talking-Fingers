@@ -10,9 +10,12 @@ import SwiftUI
 struct EndCardComponent: View {
     let context: StartContext
     let total: Int
+    /// Set when this Learn round opened the next category on home. Headlines
+    /// that, since the category just finished obviously isn't the news.
+    var unlockedCategory: TermCategory? = nil
     let onGoHome: () -> Void
     let onGoToExercise: () -> Void
-    
+
     #if os(macOS)
     private let verticalStackSpacing: CGFloat = 34
     private let sectionGap: CGFloat = 18
@@ -56,14 +59,22 @@ struct EndCardComponent: View {
             }
             
             if case .learn(let cat) = context {
-                Text("\(cat.displayName) Exercise")
+                Text(unlockedCategory?.displayName ?? "\(cat.displayName) Exercise")
                     .font(.jakarta(size: 32))
                     .foregroundColor(.black.opacity(0.7))
-                
+                    .multilineTextAlignment(.center)
+
                 Text("Unlocked!")
                     .font(.jakarta(size: 35, weight: .bold))
                     .foregroundColor(TFColors.sandGold)
-                
+
+                if unlockedCategory != nil {
+                    Text("\(cat.displayName) Exercise unlocked too")
+                        .font(.jakartaSubheadline)
+                        .foregroundColor(.black.opacity(0.6))
+                        .multilineTextAlignment(.center)
+                }
+
             } else {
                 Text("Congrats!")
                     .font(.jakarta(size: 36, weight: .bold))

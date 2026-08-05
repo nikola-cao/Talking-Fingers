@@ -102,6 +102,7 @@ struct FlexibleStartCardComponent: View {
                 EndCardComponent(
                     context: context,
                     total: total,
+                    unlockedCategory: newlyUnlockedCategory,
                     onGoHome: closeAction,
                     onGoToExercise: {
                         if case .learn(let cat) = context {
@@ -280,6 +281,17 @@ struct FlexibleStartCardComponent: View {
         }
     }
     
+    /// The category this Learn round just opened on home, if any. Read from
+    /// the live card objects, so it reflects the progress saved during the
+    /// session rather than the deck as it looked on entry.
+    private var newlyUnlockedCategory: TermCategory? {
+        guard case .learn(let category) = context else { return nil }
+        let cards = allUserFlashcards.isEmpty
+            ? flashcardVM.fullDeck(modelContext: modelContext)
+            : allUserFlashcards
+        return CategoryUnlock.categoryUnlocked(byLearning: category, flashcards: cards)
+    }
+
     private func fallbackCards(for category: TermCategory) -> [FlashcardModel] {
         Term.words(for: category).map { term in
             FlashcardModel(term: term, id: UUID(), category: category)

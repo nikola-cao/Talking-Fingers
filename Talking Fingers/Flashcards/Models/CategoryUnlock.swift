@@ -44,6 +44,18 @@ enum CategoryUnlock {
         return progression[..<index].allSatisfy { isLearnCompleted($0, flashcards: flashcards) }
     }
 
+    /// The category a just-finished Learn round has opened up, if any. That's
+    /// the next one along the chain — skipping the starting categories, which
+    /// were never locked — and only when it isn't already learned, so
+    /// replaying an old category doesn't announce anything.
+    static func categoryUnlocked(byLearning category: TermCategory, flashcards: [FlashcardModel]) -> TermCategory? {
+        guard let index = progression.firstIndex(of: category) else { return nil }
+        guard let next = progression[(index + 1)...].first(where: { !startingCategories.contains($0) }) else { return nil }
+        guard canAccess(next, flashcards: flashcards),
+              !isLearnCompleted(next, flashcards: flashcards) else { return nil }
+        return next
+    }
+
     /// The next category the learner has to finish before `category` opens,
     /// or `nil` when it's already accessible.
     static func nextPrerequisite(for category: TermCategory, flashcards: [FlashcardModel]) -> TermCategory? {
