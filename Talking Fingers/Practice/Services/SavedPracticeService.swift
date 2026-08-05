@@ -34,7 +34,8 @@ final class SavedPracticeService {
     }
 
     func upload(_ practices: [SavedPracticeModel]) async throws {
-        guard let collection = practiceCollection, !practices.isEmpty else { return }
+        guard !practices.isEmpty else { return }
+        guard let collection = practiceCollection else { throw SyncError.notSignedIn }
 
         let batch = Firebase.db.batch()
         for practice in practices {

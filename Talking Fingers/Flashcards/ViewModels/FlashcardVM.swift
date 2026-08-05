@@ -192,6 +192,9 @@ class FlashcardVM {
         Task {
             do {
                 try await firebaseService.uploadProgress(for: [card])
+                #if DEBUG
+                print("Uploaded progress for \(card.term.rawValue): \(card.progress.rawValue)")
+                #endif
                 await MainActor.run {
                     card.needsSync = false
                     try? modelContext.save()
@@ -258,6 +261,11 @@ class FlashcardVM {
             Task {
                 await updateFlashcard(card, modelContext: modelContext)
             }
+        } else {
+            // Without a context the answer is never persisted or uploaded —
+            // SwiftData's autosave still keeps it locally, which is exactly how
+            // progress can look fine on device while Firestore stays empty.
+            print("No model context: progress for \(card.term.rawValue) was not saved or uploaded")
         }
 
         dataVM.recordDailyMasterySnapshotIfNeeded()

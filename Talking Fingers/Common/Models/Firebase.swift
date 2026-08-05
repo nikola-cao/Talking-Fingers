@@ -17,6 +17,13 @@ class Firebase {
     }
 }
 
+/// Raised when a sync is attempted with no signed-in user. Thrown rather than
+/// returning quietly so callers can't mistake "nothing was sent" for success
+/// and clear their pending-changes flag.
+enum SyncError: Error {
+    case notSignedIn
+}
+
 /// Firestore field names for the `Users/{uid}` profile document, shared by
 /// every reader/writer (AuthenticationViewModel, UserProfileService).
 enum UserFields {

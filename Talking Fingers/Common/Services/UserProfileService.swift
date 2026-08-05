@@ -27,7 +27,7 @@ final class UserProfileService {
     }
 
     func uploadProfile(for user: User) async throws {
-        guard let document = userDocument else { return }
+        guard let document = userDocument else { throw SyncError.notSignedIn }
 
         var data: [String: Any] = [
             UserFields.userId: user.userId,
@@ -46,7 +46,7 @@ final class UserProfileService {
     }
 
     func uploadHandedness(_ handedness: String?) async throws {
-        guard let document = userDocument else { return }
+        guard let document = userDocument else { throw SyncError.notSignedIn }
         var data: [String: Any] = [
             UserFields.profileUpdatedAt: Timestamp(date: Date())
         ]

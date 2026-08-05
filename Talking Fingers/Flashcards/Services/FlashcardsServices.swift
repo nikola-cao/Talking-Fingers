@@ -43,7 +43,8 @@ final class FlashcardsServices {
 
     /// Uploads the user's progress for the given cards in a single batched write.
     func uploadProgress(for cards: [FlashcardModel]) async throws {
-        guard let collection = progressCollection, !cards.isEmpty else { return }
+        guard !cards.isEmpty else { return }
+        guard let collection = progressCollection else { throw SyncError.notSignedIn }
 
         let batch = db.batch()
         for card in cards {
@@ -66,7 +67,10 @@ final class FlashcardsServices {
     /// Replaces any previous listener.
     func startListening(onChange: @escaping ([CardProgress]) -> Void) {
         stopListening()
-        guard let collection = progressCollection else { return }
+        guard let collection = progressCollection else {
+            print("Progress listener not attached: no signed-in user")
+            return
+        }
 
         listener = collection.addSnapshotListener { snapshot, error in
             guard let snapshot else {
