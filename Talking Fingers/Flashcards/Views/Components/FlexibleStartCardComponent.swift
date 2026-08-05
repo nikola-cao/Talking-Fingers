@@ -93,7 +93,15 @@ struct FlexibleStartCardComponent: View {
     @Environment(\.modelContext) private var modelContext
 
     var progress: CGFloat {
-        CGFloat(Double(completed) / Double(max(total, 1)))
+        CGFloat(Double(completed) / Double(max(effectiveTotal, 1)))
+    }
+
+    /// Learn runs exactly the terms in its queue, which is shorter than a full
+    /// round once a category has fewer than 10 unseen terms left — so the
+    /// counts on screen come from the queue rather than the caller's estimate.
+    private var effectiveTotal: Int {
+        guard context.isLearn, !flashcardVM.flashcards.isEmpty else { return total }
+        return flashcardVM.flashcards.count
     }
 
     var body: some View {
@@ -101,7 +109,7 @@ struct FlexibleStartCardComponent: View {
             if showEndScreen {
                 EndCardComponent(
                     context: context,
-                    total: total,
+                    total: effectiveTotal,
                     unlockedCategory: newlyUnlockedCategory,
                     onGoHome: closeAction,
                     onGoToExercise: {
@@ -116,8 +124,9 @@ struct FlexibleStartCardComponent: View {
                 switch context {
                 case .learn(let category):
                     LearnFlow(
-                        initialCard: flashcardVM.flashcards.first ?? fallbackCard(for: category),
-                        targetCount: total,
+                        cards: flashcardVM.flashcards.isEmpty
+                            ? [fallbackCard(for: category)]
+                            : flashcardVM.flashcards,
                         vm: flashcardVM,
                         onLeave: closeAction
                     ) {
@@ -198,7 +207,7 @@ struct FlexibleStartCardComponent: View {
                     Text("\(completed)/\(total) Words Completed")
                         .foregroundColor(.black)
                 } else {
-                    Text("\(total) words to go!")
+                    Text("\(effectiveTotal) words to go!")
                         .font(.jakarta(size: 16, weight: .medium))
                         .foregroundColor(Color.black.opacity(0.35))
                         .multilineTextAlignment(.center)
@@ -270,7 +279,12 @@ struct FlexibleStartCardComponent: View {
         let sourceCards = allUserFlashcards.isEmpty ? flashcardVM.flashcards : allUserFlashcards
 
         switch context {
-        case .learn(let category), .exercise(let category):
+        case .learn(let category):
+            let categoryCards = sourceCards
+                .filter { $0.category == category && $0.term.category == category }
+            let pool = categoryCards.isEmpty ? fallbackCards(for: category) : categoryCards
+            flashcardVM.setSessionQueue(FlashcardVM.learnQueue(from: pool))
+        case .exercise(let category):
             let categoryCards = sourceCards
                 .filter { $0.category == category && $0.term.category == category }
             flashcardVM.setSessionQueue(categoryCards.isEmpty ? fallbackCards(for: category) : categoryCards)
@@ -419,41 +433,58 @@ private struct ExerciseSessionFlow: View {
 }
 
 private struct LearnFlow: View {
-    @State private var currentCard: FlashcardModel
-    @State private var completedCount: Int = 0
-    let targetCount: Int
+    /// The round's terms, in order and without repeats — see
+    /// `FlashcardVM.learnQueue`. The flow walks it straight through, so the
+    /// round is exactly as long as the queue.
+    let cards: [FlashcardModel]
+    @State private var index: Int = 0
     let vm: FlashcardVM
     let onLeave: () -> Void
     let onFinished: () -> Void
     @Environment(SwiftDataVM.self) private var dataVM
     @Query private var users: [User]
-    
-    init(initialCard: FlashcardModel, targetCount: Int, vm: FlashcardVM, onLeave: @escaping () -> Void, onFinished: @escaping () -> Void) {
-        _currentCard = State(initialValue: initialCard)
-        self.targetCount = targetCount
-        self.vm = vm
-        self.onLeave = onLeave
-        self.onFinished = onFinished
+
+    private var currentCard: FlashcardModel? {
+        cards.indices.contains(index) ? cards[index] : nil
     }
-    
+
     var body: some View {
-        let learnVM = LearnModeVM(flashcard: currentCard)
+        Group {
+            if let currentCard {
+                LearnModeView(
+                    vm: makeLearnVM(for: currentCard),
+                    progress: Double(index) / Double(max(cards.count, 1)),
+                    onClose: onLeave
+                )
+                .id(currentCard.id)
+            } else {
+                // Only reachable with an empty queue; end rather than hang.
+                Color.clear.onAppear(perform: onFinished)
+            }
+        }
+    }
+
+    private func makeLearnVM(for card: FlashcardModel) -> LearnModeVM {
+        let learnVM = LearnModeVM(flashcard: card)
         learnVM.onAnswer = { wasCorrect in
-            vm.handleAnswer(for: currentCard, correct: wasCorrect, user: users.first, dataVM: dataVM)
+            // Learn teaches a term; it never promotes past `.learning`.
+            vm.handleAnswer(
+                for: card,
+                correct: wasCorrect,
+                user: users.first,
+                dataVM: dataVM,
+                progressCeiling: .learning
+            )
             advance()
         }
-        
-        return LearnModeView(vm: learnVM, progress: Double(completedCount) / Double(max(targetCount, 1)), onClose: onLeave)
-            .id(currentCard.id)
+        return learnVM
     }
-    
+
     private func advance() {
-        completedCount += 1
-        if completedCount >= targetCount {
+        index += 1
+        if index >= cards.count {
             onFinished()
-            return
         }
-        if let next = vm.nextCard() { currentCard = next } else { onFinished() }
     }
 }
 

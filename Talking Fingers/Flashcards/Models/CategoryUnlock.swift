@@ -26,13 +26,16 @@ enum CategoryUnlock {
     /// them has been learned.
     static let foundationCategories: [TermCategory] = [.alphabet, .numbers, .personalInformation]
 
-    /// A category counts as learned once any of its cards has moved off
-    /// `.new`. Cards whose term doesn't actually belong to their stored
-    /// category are ignored, guarding against mismatched remote records.
+    /// A category counts as learned once *every* one of its terms has moved
+    /// off `.new` — a Learn round only covers 10 terms, so a bigger category
+    /// takes several rounds to clear. Cards whose term doesn't actually belong
+    /// to their stored category are ignored, guarding against mismatched
+    /// remote records.
     static func isLearnCompleted(_ category: TermCategory, flashcards: [FlashcardModel]) -> Bool {
-        flashcards.contains { card in
-            card.category == category && card.term.category == category && card.progress != .new
+        let categoryCards = flashcards.filter { card in
+            card.category == category && card.term.category == category
         }
+        return !categoryCards.isEmpty && categoryCards.allSatisfy { $0.progress != .new }
     }
 
     // MARK: - Home

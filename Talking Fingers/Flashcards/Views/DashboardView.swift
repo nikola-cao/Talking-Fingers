@@ -242,7 +242,7 @@ struct DashboardView: View {
     private func flowDestination(for flow: ActiveFlow) -> some View {
         switch flow {
         case .learn(let category):
-            FlexibleStartCardComponent(context: .learn(category), completed: 0, total: 12) {
+            FlexibleStartCardComponent(context: .learn(category), completed: 0, total: FlashcardVM.learnRoundSize) {
                 activeFlow = nil
             }
             .environment(dataVM)

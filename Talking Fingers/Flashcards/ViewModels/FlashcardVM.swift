@@ -48,6 +48,20 @@ class FlashcardVM {
         fetchFromSwiftData(modelContext)
     }
 
+    /// How many terms one Learn round covers, at most.
+    static let learnRoundSize = 10
+
+    /// The terms a Learn round runs through: unseen ones first, and only those
+    /// — a short round is the correct outcome when a category has fewer than
+    /// `limit` left. Once nothing is `.new`, replays draw at random from the
+    /// whole category. The result is the session in order, never repeating a
+    /// term, so the caller can walk it straight through.
+    static func learnQueue(from cards: [FlashcardModel], limit: Int = learnRoundSize) -> [FlashcardModel] {
+        let unseenCards = cards.filter { $0.progress == .new }
+        let pool = unseenCards.isEmpty ? cards : unseenCards
+        return Array(pool.shuffled().prefix(limit))
+    }
+
     /// Pins the cards a Learn/Exercise/Daily session draws from. Everything
     /// that reloads the deck respects this, so an alphabet session can't be
     /// handed the full deck by a background refresh part-way through.
@@ -188,7 +202,17 @@ class FlashcardVM {
         }
     }
     
-    func handleAnswer(for card: FlashcardModel, correct: Bool, user: User?, dataVM: SwiftDataVM) {
+    /// - Parameter progressCeiling: the furthest this session may advance a
+    ///   card. Learn passes `.learning`: it teaches a term, it doesn't promote
+    ///   one to polished or mastered — that's exercise's job. A card already
+    ///   above the ceiling simply keeps its progress.
+    func handleAnswer(
+        for card: FlashcardModel,
+        correct: Bool,
+        user: User?,
+        dataVM: SwiftDataVM,
+        progressCeiling: ProgressType? = nil
+    ) {
         dataVM.recordAttempt(term: card.term, correct: correct)
 
         if let user {
@@ -218,7 +242,14 @@ class FlashcardVM {
             newProgress = .learning
         }
 
-        card.progress = newProgress
+        // Cap upward movement only: a card sitting above the ceiling keeps the
+        // progress it earned in exercise rather than being knocked back to it.
+        if let progressCeiling, newProgress > progressCeiling {
+            card.progress = min(card.progress, newProgress)
+        } else {
+            card.progress = newProgress
+        }
+
         if correct {
             card.lastSucceeded = Date()
         }
